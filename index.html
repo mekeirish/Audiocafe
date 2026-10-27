@@ -18,142 +18,249 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
   <style>
-    body { touch-action: manipulation; background:#0f172a; color:#f8fafc;
-           font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .glass-card { background: rgba(30,41,59,0.7); backdrop-filter: blur(12px);
-                  border: 1px solid rgba(255,255,255,0.08); }
-    .ptt-button { background: radial-gradient(circle,#f97316 0%,#c2410c 100%);
-                  box-shadow: 0 0 25px rgba(249,115,22,0.4), inset 0 2px 4px rgba(255,255,255,0.3);
-                  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+    :root {
+      --accent: #f97316;
+    }
+    body {
+      touch-action: manipulation;
+      background-color: #0b1120;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Fond dynamique personnalisable */
+    #bgLayer {
+      position: fixed;
+      inset: 0;
+      z-index: -10;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: background-image 0.8s ease-in-out;
+    }
+    #bgOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: -9;
+      background: rgba(15, 23, 42, 0.85); /* Filtre sombre pour la lisibilité */
+      backdrop-filter: blur(6px);
+    }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .ptt-button {
+      background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
+      box-shadow: 0 0 40px rgba(249, 115, 22, 0.3), inset 0 4px 6px rgba(255, 255, 255, 0.2);
+      user-select: none;
+      -webkit-user-select: none;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
     .ptt-button:active, .ptt-button.active {
-      background: radial-gradient(circle,#ea580c 0%,#9a3412 100%);
-      box-shadow: 0 0 45px rgba(249,115,22,0.8), inset 0 4px 8px rgba(0,0,0,0.5);
-      transform: scale(0.96); }
-    .pulse-ring { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
-    @keyframes pulse { 0%,100%{opacity:.2;transform:scale(1)} 50%{opacity:.6;transform:scale(1.05)} }
-    #audioVisualizer { display:block; width:100%; height:100%; }
-    .mode-btn { color:#94a3b8; transition:all .15s; }
+      background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
+      box-shadow: 0 0 60px rgba(249, 115, 22, 0.7), inset 0 8px 12px rgba(0, 0, 0, 0.4);
+      transform: scale(0.95);
+    }
+
+    .pulse-ring {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.15; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.05); }
+    }
+
+    /* Animations Modales */
+    .modal-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-content {
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .modal-overlay.active .modal-content {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Status Dot Animation */
+    .status-online { animation: glow 2s infinite alternate; }
+    @keyframes glow {
+      from { box-shadow: 0 0 5px #10b981, 0 0 10px #10b981; }
+      to { box-shadow: 0 0 15px #10b981, 0 0 25px #10b981; }
+    }
+
+    #audioVisualizer { display: block; width: 100%; height: 100%; }
+    
+    /* Segmented Control */
+    .mode-btn {
+      color: #94a3b8;
+      transition: all 0.3s ease;
+      border-radius: 9999px;
+    }
     .mode-btn.active-mode {
-      background: linear-gradient(to right,#f97316,#d97706);
-      color:#fff; box-shadow: 0 0 12px rgba(249,115,22,.4);
+      background: linear-gradient(135deg, #f97316, #d97706);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
     }
   </style>
 </head>
 <body class="h-screen w-screen flex flex-col justify-between overflow-hidden select-none">
+
+  <!-- Arrière-plan personnalisable -->
+  <div id="bgLayer"></div>
+  <div id="bgOverlay"></div>
 
   <!-- Bandeau d'alerte Autoplay -->
   <div id="autoplayAlert" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white text-center py-2 text-sm font-bold z-50 animate-pulse cursor-pointer">
     <i class="fa-solid fa-volume-high mr-2"></i> Touchez l'écran pour activer le son
   </div>
 
-  <header class="p-4 glass-card rounded-b-2xl mx-2 mt-2 flex justify-between items-center z-10">
+  <header class="p-4 glass-card rounded-2xl mx-3 mt-3 flex justify-between items-center z-10">
     <div class="flex items-center gap-3">
-      <div id="statusDot" class="w-3.5 h-3.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50"></div>
+      <div id="statusDot" class="w-3.5 h-3.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50 transition-colors duration-500"></div>
       <div>
-        <h1 class="font-bold text-lg tracking-wide text-orange-400">WALKIE-TALKIE P2P</h1>
-        <p id="statusText" class="text-xs text-slate-400">Hors ligne</p>
+        <h1 class="font-bold text-lg tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">WALKIE-TALKIE P2P</h1>
+        <p id="statusText" class="text-[11px] text-slate-400 font-medium tracking-wide uppercase">Hors ligne</p>
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <button id="helpBtn" aria-label="Aide" class="w-10 h-10 rounded-full glass-card hover:bg-slate-700 flex items-center justify-center text-orange-400 text-lg font-bold border border-orange-500/30">?</button>
-      <button id="configBtn" aria-label="Configuration" class="w-10 h-10 rounded-full glass-card hover:bg-slate-700 flex items-center justify-center text-slate-200">
+      <button id="helpBtn" aria-label="Aide" class="w-10 h-10 rounded-full glass-card hover:bg-slate-700/50 flex items-center justify-center text-orange-400 text-lg font-bold transition-all active:scale-90">?</button>
+      <button id="configBtn" aria-label="Configuration" class="w-10 h-10 rounded-full glass-card hover:bg-slate-700/50 flex items-center justify-center text-slate-200 transition-all active:scale-90">
         <i class="fa-solid fa-gear"></i>
       </button>
     </div>
   </header>
 
-  <main class="flex-1 flex flex-col items-center justify-center p-4 relative">
-    <div id="modeSelector" class="flex glass-card rounded-full p-1 mb-4 gap-1 text-[10px] sm:text-[11px]">
-      <button data-mode="ptt"    class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">PTT</button>
-      <button data-mode="toggle" class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">Toggle</button>
-      <button data-mode="vox"    class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">VOX</button>
-      <button data-mode="full"   class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">Continu</button>
+  <main class="flex-1 flex flex-col items-center justify-center p-4 relative z-10">
+    
+    <!-- Sélecteur de mode (PTT / Continu) -->
+    <div id="modeSelector" class="flex glass-card rounded-full p-1 mb-6 gap-1 text-xs sm:text-sm w-64">
+      <button data-mode="ptt" class="mode-btn w-1/2 py-2.5 rounded-full font-bold uppercase tracking-wider active-mode">PTT</button>
+      <button data-mode="full" class="mode-btn w-1/2 py-2.5 rounded-full font-bold uppercase tracking-wider">Continu</button>
     </div>
 
-    <div class="w-full max-w-sm h-20 mb-6 glass-card rounded-xl p-2 flex items-center justify-center overflow-hidden relative">
-      <canvas id="audioVisualizer" class="w-full h-full"></canvas>
-      <div id="peerInfo" class="absolute top-1 left-2 text-[10px] text-slate-400 font-mono bg-slate-900/60 px-1.5 py-0.5 rounded">
-        Canal: <span id="currentPeerDisplay" class="text-orange-400">Non connecté</span>
+    <!-- Visualiseur -->
+    <div class="w-full max-w-sm h-24 mb-8 glass-card rounded-2xl p-3 flex items-center justify-center overflow-hidden relative shadow-inner">
+      <canvas id="audioVisualizer" class="w-full h-full opacity-80"></canvas>
+      <div id="peerInfo" class="absolute top-2 left-3 text-[10px] text-slate-300 font-mono bg-slate-900/80 px-2 py-1 rounded-md border border-slate-700/50">
+        Canal: <span id="currentPeerDisplay" class="text-orange-400 font-bold">Non connecté</span>
       </div>
     </div>
 
-    <div class="relative flex items-center justify-center">
-      <div id="pulseBg" class="absolute w-64 h-64 rounded-full bg-orange-500/10 pulse-ring pointer-events-none hidden"></div>
-      <button id="pttBtn" aria-label="Bouton principal" class="ptt-button w-56 h-56 rounded-full flex flex-col items-center justify-center transition-transform duration-75 border-4 border-orange-400/30 z-20 cursor-pointer">
-        <i class="fa-solid fa-microphone text-5xl text-white mb-2"></i>
-        <span id="pttLabel" class="font-black text-xl tracking-wider text-white">MAINTENIR</span>
-        <span id="pttSub" class="text-xs font-semibold text-orange-200 uppercase tracking-widest mt-1">POUR PARLER</span>
+    <!-- Bouton Principal -->
+    <div class="relative flex items-center justify-center mt-2">
+      <div id="pulseBg" class="absolute w-72 h-72 rounded-full bg-orange-500/20 pulse-ring pointer-events-none hidden"></div>
+      <button id="pttBtn" aria-label="Bouton principal" class="ptt-button w-60 h-60 rounded-full flex flex-col items-center justify-center border-4 border-orange-400/20 z-20 cursor-pointer">
+        <i class="fa-solid fa-microphone text-6xl text-white mb-3 drop-shadow-lg transition-transform duration-300"></i>
+        <span id="pttLabel" class="font-black text-2xl tracking-widest text-white drop-shadow-md">MAINTENIR</span>
+        <span id="pttSub" class="text-xs font-bold text-orange-100 uppercase tracking-widest mt-1 opacity-90">POUR PARLER</span>
       </button>
     </div>
 
-    <div id="txRxStatus" class="mt-8 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase bg-slate-800 text-slate-500 border border-slate-700">Veille</div>
+    <div id="txRxStatus" class="mt-10 px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase bg-slate-800/80 text-slate-400 border border-slate-700/50 backdrop-blur-md transition-all duration-300">Veille</div>
   </main>
 
-  <footer class="p-3 text-center text-xs text-slate-500 border-t border-slate-800/60 glass-card mx-2 mb-2 rounded-t-xl">
-    <p>Communication Wi-Fi directe à très basse latence</p>
-    <p class="text-[10px] text-orange-400/70 mt-0.5 font-mono">Made by Brahim Laiche 2026 Paris</p>
+  <footer class="p-4 text-center border-t border-slate-700/50 glass-card mx-3 mb-3 rounded-2xl z-10">
+    <p class="text-[11px] text-orange-400/80 font-mono tracking-wider">Made by Brahim Laiche 2026 Paris</p>
   </footer>
 
-  <button id="installPwaBtn" class="hidden fixed bottom-16 right-4 z-40 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold px-4 py-2.5 rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-2 border border-orange-300/40 text-sm animate-bounce">
+  <button id="installPwaBtn" class="hidden fixed bottom-24 right-4 z-40 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold px-5 py-3 rounded-full shadow-[0_10px_20px_rgba(249,115,22,0.4)] flex items-center gap-2 border border-orange-300/30 text-sm animate-bounce">
     <i class="fa-solid fa-download"></i><span>Installer l'App</span>
   </button>
 
   <!-- Modal Aide -->
-  <div id="helpModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
-    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-700 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold text-orange-400 flex items-center gap-2"><i class="fa-solid fa-circle-question"></i> Guide</h3>
-        <button id="closeHelpBtn" aria-label="Fermer" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+  <div id="helpModal" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="modal-content glass-card max-w-md w-full rounded-3xl p-6 border border-slate-600/50 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="text-lg font-bold text-orange-400 flex items-center gap-2"><i class="fa-solid fa-circle-question"></i> Guide d'utilisation</h3>
+        <button id="closeHelpBtn" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-3 text-sm text-slate-300">
-        <section class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
-          <h4 class="font-semibold text-white mb-1">Modes d'émission</h4>
-          <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
-            <li><b>PTT</b> : maintenir pour parler.</li>
-            <li><b>Toggle</b> : tap pour ouvrir / re-tap pour fermer.</li>
-            <li><b>VOX</b> : détection vocale auto (mains libres).</li>
-            <li><b>Continu</b> : duplex permanent, bouton = mute.</li>
+      <div class="space-y-4 text-sm text-slate-300">
+        <section class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+          <h4 class="font-semibold text-white mb-2">Modes d'émission</h4>
+          <ul class="text-xs text-slate-400 space-y-2 list-disc list-inside">
+            <li><b>PTT (Push-To-Talk)</b> : Maintenez le bouton pour parler, relâchez pour écouter.</li>
+            <li><b>Continu</b> : Mode appel. Le micro est toujours ouvert (le bouton sert de Mute).</li>
           </ul>
         </section>
-        <section class="bg-red-900/30 p-3 rounded-xl border border-red-700/50">
-          <h4 class="font-semibold text-red-300 mb-1"><i class="fa-solid fa-headphones"></i> Casque recommandé</h4>
-          <p class="text-xs text-red-200/80">En VOX ou Continu, le micro restant ouvert, un casque évite le larsen (sifflement).</p>
+        <section class="bg-red-900/20 p-4 rounded-2xl border border-red-700/30">
+          <h4 class="font-semibold text-red-300 mb-1 flex items-center gap-2"><i class="fa-solid fa-headphones"></i> Casque recommandé</h4>
+          <p class="text-xs text-red-200/70">En mode Continu, l'utilisation d'un casque évite le larsen (sifflement) dû au retour du haut-parleur dans le micro.</p>
         </section>
       </div>
-      <button id="gotItBtn" class="w-full mt-5 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl">Compris !</button>
+      <button id="gotItBtn" class="w-full mt-6 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg">Compris !</button>
     </div>
   </div>
 
   <!-- Modal Config -->
-  <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
-    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-700 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold text-orange-400">Configuration P2P</h3>
-        <button id="closeConfigBtn" aria-label="Fermer" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+  <div id="configModal" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="modal-content glass-card max-w-md w-full rounded-3xl p-6 border border-slate-600/50 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="text-lg font-bold text-orange-400">Configuration</h3>
+        <button id="closeConfigBtn" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="mb-6 bg-slate-800/80 p-4 rounded-xl text-center border border-slate-700">
-        <span class="text-xs text-slate-400 block mb-1">Votre ID</span>
+      
+      <!-- Section ID / QR -->
+      <div class="mb-5 bg-slate-800/60 p-5 rounded-2xl text-center border border-slate-700/50">
+        <span class="text-[11px] text-slate-400 uppercase tracking-wider font-bold block mb-2">Votre ID d'appareil</span>
         <div id="myIdDisplay" class="font-mono text-xl font-bold text-orange-400 tracking-wider mb-3">...</div>
-        <div id="qrcode" class="flex justify-center p-2 bg-white rounded-lg inline-block my-2"></div>
+        <div id="qrcode" class="flex justify-center p-2 bg-white rounded-xl inline-block my-1 shadow-lg"></div>
       </div>
-      <div class="space-y-3">
-        <label for="targetPeerId" class="text-xs text-slate-300 font-semibold block">Se connecter à un interlocuteur</label>
-        <div class="flex gap-2">
-          <input type="text" id="targetPeerId" placeholder="Ex: TALK-123456" autocomplete="off" spellcheck="false" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-orange-500">
-          <button id="connectPeerBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl text-sm">Lier</button>
+
+      <!-- Section Connexion -->
+      <div class="space-y-4">
+        <div>
+          <label for="targetPeerId" class="text-[11px] text-slate-400 uppercase tracking-wider font-bold block mb-2">Se connecter à un interlocuteur</label>
+          <div class="flex gap-2">
+            <input type="text" id="targetPeerId" placeholder="Ex: TALK-123456" autocomplete="off" spellcheck="false" class="flex-1 bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm font-mono text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all">
+            <button id="connectPeerBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-3 rounded-xl text-sm transition-colors shadow-lg shadow-orange-500/30">Lier</button>
+          </div>
         </div>
-        <div class="relative flex py-2 items-center">
-          <div class="flex-grow border-t border-slate-700"></div>
-          <span class="flex-shrink mx-4 text-xs text-slate-500 uppercase">ou</span>
-          <div class="flex-grow border-t border-slate-700"></div>
+        
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-700/50"></div>
+          <span class="flex-shrink mx-4 text-[10px] text-slate-500 font-bold uppercase">ou</span>
+          <div class="flex-grow border-t border-slate-700/50"></div>
         </div>
-        <button id="startScanBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl border border-slate-700 flex items-center justify-center gap-2 text-sm">
-          <i class="fa-solid fa-qrcode"></i> Scanner le QR Code
+
+        <button id="startScanBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 rounded-xl border border-slate-700 flex items-center justify-center gap-2 text-sm transition-colors">
+          <i class="fa-solid fa-qrcode text-orange-400"></i> Scanner le QR Code
         </button>
-        <div id="scannerContainer" class="hidden mt-3 relative rounded-xl overflow-hidden border border-orange-500/50">
+        
+        <div id="scannerContainer" class="hidden mt-3 relative rounded-xl overflow-hidden border border-orange-500/50 bg-black">
           <video id="scannerVideo" class="w-full h-48 object-cover" playsinline muted></video>
-          <button id="stopScanBtn" aria-label="Arrêter" class="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center">
+          <button id="stopScanBtn" class="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-500 transition-colors">
             <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Section Personnalisation -->
+        <div class="relative flex py-2 items-center">
+          <div class="flex-grow border-t border-slate-700/50"></div>
+          <span class="flex-shrink mx-4 text-[10px] text-slate-500 font-bold uppercase">Apparence</span>
+          <div class="flex-grow border-t border-slate-700/50"></div>
+        </div>
+
+        <div class="flex gap-2">
+          <label for="bgImageInput" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 rounded-xl border border-slate-700 flex items-center justify-center gap-2 text-sm transition-colors cursor-pointer">
+            <i class="fa-solid fa-image text-orange-400"></i> Changer le fond
+          </label>
+          <input type="file" id="bgImageInput" accept="image/*" class="hidden">
+          
+          <button id="resetBgBtn" title="Réinitialiser le fond" class="bg-slate-800 hover:bg-red-900/50 text-slate-400 hover:text-red-400 px-4 rounded-xl border border-slate-700 transition-colors">
+            <i class="fa-solid fa-rotate-left"></i>
           </button>
         </div>
       </div>
@@ -162,16 +269,11 @@
 
   <!-- Audio Elements -->
   <audio id="remoteAudio" autoplay playsinline></audio>
-  <!-- Élément muet obligatoire pour forcer Chrome à transmettre le flux WebAudio -->
   <audio id="silentAudio" autoplay playsinline muted></audio>
 
   <script>
     'use strict';
     const $ = (id) => document.getElementById(id);
-
-    // ===== Constantes =====
-    const VOX_THRESHOLD = 25;
-    const VOX_HANG_MS   = 800;
 
     // ===== État =====
     let myPeerId = null;
@@ -187,17 +289,12 @@
     let visualizerStarted = false;
     let radioMode = 'ptt';
     let isTransmitting = false;
-    let voxLoopStarted = false;
-    let voxHangTimer = null;
     let deferredPrompt = null;
     let videoStream = null;
     let scanInterval = null;
     let autoplayBlocked = false;
 
     // ===== Utilitaires =====
-    const isSecure = () => window.isSecureContext ||
-      location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-
     const generateShortId = () => `TALK-${Math.floor(100000 + Math.random() * 900000)}`;
 
     function ensureAudioCtx() {
@@ -212,12 +309,12 @@
     function updateTxRxStatus(text, color) {
       const el = $('txRxStatus');
       el.innerText = text;
-      const base = "mt-8 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase border";
+      const base = "mt-10 px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase border backdrop-blur-md transition-all duration-300";
       const map = {
-        orange: "bg-orange-500/20 text-orange-400 border-orange-500/50",
-        emerald:"bg-emerald-500/20 text-emerald-400 border-emerald-500/50",
-        red:    "bg-red-500/20 text-red-400 border-red-500/50",
-        gray:   "bg-slate-800 text-slate-500 border-slate-700"
+        orange: "bg-orange-500/20 text-orange-400 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]",
+        emerald:"bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]",
+        red:    "bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]",
+        gray:   "bg-slate-800/80 text-slate-400 border-slate-700/50"
       };
       el.className = `${base} ${map[color] || map.gray}`;
     }
@@ -233,7 +330,7 @@
           for (let i = 0; i < sz; i++) o[i] = Math.random() * 2 - 1;
           const src = ctx.createBufferSource(); src.buffer = b;
           const g = ctx.createGain();
-          g.gain.setValueAtTime(0.15, ctx.currentTime);
+          g.gain.setValueAtTime(0.1, ctx.currentTime);
           g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
           src.connect(g).connect(ctx.destination); src.start();
         } else if (type === 'roger') {
@@ -246,49 +343,39 @@
           osc.connect(g).connect(ctx.destination);
           osc.start(); osc.stop(ctx.currentTime + 0.16);
         }
-      } catch (e) { console.warn('beep:', e); }
+      } catch (e) {}
     }
 
-    // ===== Pipeline Audio avec correction Chrome =====
+    // ===== Pipeline Audio =====
     function setupAudioPipeline() {
       const ctx = ensureAudioCtx();
       if (!ctx || !localStream) return;
       try {
         const src = ctx.createMediaStreamSource(localStream);
-
-        // Analyseur pour VOX et visualiseur
         localAnalyser = ctx.createAnalyser();
         localAnalyser.fftSize = 64;
         src.connect(localAnalyser);
 
-        // Gain pour contrôler l'émission (mute/unmute)
         txGain = ctx.createGain();
-        txGain.gain.value = 0; // Muet au départ
+        txGain.gain.value = 0;
 
-        // Destination pour PeerJS
         txDestination = ctx.createMediaStreamDestination();
         src.connect(txGain).connect(txDestination);
         gatedStream = txDestination.stream;
 
-        // CORRECTION : On attache le flux généré à un élément <audio> muet
-        // Sinon Chrome considère le flux comme inactif et ne l'envoie pas.
         const silentAudio = $('silentAudio');
         silentAudio.srcObject = gatedStream;
-        silentAudio.play().catch(e => console.log('Silent audio bloqué par le navigateur:', e));
-
+        silentAudio.play().catch(e => console.log('Silent audio bloqué:', e));
       } catch (e) {
-        console.warn('pipeline audio KO, fallback track.enabled', e);
+        console.warn('Pipeline audio fallback', e);
         txGain = null;
         gatedStream = null;
       }
-
       startVisualizerLoop();
-      startVOXLoop();
     }
 
     function applyTxState() {
       if (txGain && audioCtx) {
-        // Modification directe (plus fiable que setTargetAtTime)
         txGain.gain.value = isTransmitting ? 1 : 0;
       } else if (localStream) {
         const t = localStream.getAudioTracks()[0];
@@ -303,7 +390,7 @@
 
       if (!opts.silent && on !== was && radioMode !== 'full') {
         playRadioBeep(on ? 'squelch' : 'roger');
-        if (navigator.vibrate) navigator.vibrate(on ? 50 : [30, 30]);
+        if (navigator.vibrate) navigator.vibrate(on ? 40 : [20, 30]);
       }
 
       $('pttBtn').classList.toggle('active', isTransmitting);
@@ -320,7 +407,7 @@
         remoteAnalyser = ctx.createAnalyser();
         remoteAnalyser.fftSize = 64;
         src.connect(remoteAnalyser);
-      } catch (e) { console.warn('viz remote:', e); }
+      } catch (e) {}
       startVisualizerLoop();
     }
 
@@ -340,10 +427,7 @@
         if (canvas.height !== h) canvas.height = h;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        let an;
-        if (radioMode === 'full') an = localAnalyser;
-        else if (isTransmitting) an = localAnalyser;
-        else an = remoteAnalyser || localAnalyser;
+        let an = radioMode === 'full' || isTransmitting ? localAnalyser : (remoteAnalyser || localAnalyser);
         if (!an) return;
 
         an.getByteFrequencyData(buf);
@@ -351,58 +435,27 @@
         for (let i = 0; i < buf.length; i++) {
           const bh = (buf[i] / 255) * canvas.height;
           if (bh < 1) continue;
-          ctx.fillStyle = radioMode === 'vox' && !isTransmitting ? '#64748b' : '#f97316';
+          ctx.fillStyle = isTransmitting ? '#f97316' : '#64748b';
           ctx.fillRect(i * bw, canvas.height - bh, Math.max(1, bw - 1), bh);
         }
       }
       draw();
     }
 
-    // ===== VOX =====
-    function startVOXLoop() {
-      if (voxLoopStarted) return;
-      voxLoopStarted = true;
-      const buf = new Uint8Array(32);
-
-      function loop() {
-        requestAnimationFrame(loop);
-        if (radioMode !== 'vox' || !localAnalyser) return;
-
-        localAnalyser.getByteFrequencyData(buf);
-        let sum = 0;
-        for (let i = 0; i < buf.length; i++) sum += buf[i];
-        const avg = sum / buf.length;
-
-        if (avg > VOX_THRESHOLD) {
-          if (!isTransmitting) setTx(true);
-          clearTimeout(voxHangTimer);
-          voxHangTimer = setTimeout(() => {
-            if (radioMode === 'vox' && isTransmitting) setTx(false);
-          }, VOX_HANG_MS);
-        }
-      }
-      loop();
-    }
-
-    // ===== Gestion des modes =====
+    // ===== Modes =====
     function updateStatusForMode() {
       if (radioMode === 'full') {
         updateTxRxStatus(isTransmitting ? 'LIVE · DUPLEX' : 'MUTÉ', isTransmitting ? 'orange' : 'gray');
       } else if (isTransmitting) {
         updateTxRxStatus('ÉMISSION (TX)', 'orange');
-      } else if (radioMode === 'vox') {
-        updateTxRxStatus(activeCall ? 'VOX · ÉCOUTE' : 'VOX · VEILLE', activeCall ? 'emerald' : 'gray');
       } else {
         updateTxRxStatus(activeCall ? 'RÉCEPTION (RX)' : 'Veille', activeCall ? 'emerald' : 'gray');
       }
     }
 
     function setMode(mode) {
-      if (!['ptt','toggle','vox','full'].includes(mode)) return;
-      if (mode === radioMode) return;
+      if (!['ptt','full'].includes(mode) || mode === radioMode) return;
       radioMode = mode;
-
-      clearTimeout(voxHangTimer);
       isTransmitting = false;
       applyTxState();
       updateModeUI();
@@ -423,21 +476,41 @@
       const label = $('pttLabel');
       const sub = $('pttSub');
 
-      switch (radioMode) {
-        case 'ptt':
-          icon.className = 'fa-solid fa-microphone text-5xl text-white mb-2';
-          label.textContent = 'MAINTENIR'; sub.textContent = 'POUR PARLER'; break;
-        case 'toggle':
-          icon.className = 'fa-solid fa-microphone text-5xl text-white mb-2';
-          label.textContent = 'TOUCHER'; sub.textContent = 'POUR OUVRIR'; break;
-        case 'vox':
-          icon.className = 'fa-solid fa-wave-square text-5xl text-white mb-2';
-          label.textContent = 'VOX'; sub.textContent = 'DÉTECTION AUTO'; break;
-        case 'full':
-          icon.className = 'fa-solid fa-phone-volume text-5xl text-white mb-2';
-          label.textContent = 'MUTE'; sub.textContent = 'DUPLEX PERMANENT'; break;
+      if (radioMode === 'ptt') {
+        icon.className = 'fa-solid fa-microphone text-6xl text-white mb-3 drop-shadow-lg transition-transform duration-300';
+        label.textContent = 'MAINTENIR'; sub.textContent = 'POUR PARLER';
+      } else {
+        icon.className = 'fa-solid fa-phone-volume text-6xl text-white mb-3 drop-shadow-lg transition-transform duration-300';
+        label.textContent = 'MUTE'; sub.textContent = 'DUPLEX PERMANENT';
       }
     }
+
+    // ===== Arrière-plan Personnalisé =====
+    const bgLayer = $('bgLayer');
+    
+    function loadBg() {
+      const savedBg = localStorage.getItem('talkie_bg');
+      if (savedBg) {
+        bgLayer.style.backgroundImage = `url(${savedBg})`;
+      }
+    }
+    
+    $('bgImageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        bgLayer.style.backgroundImage = `url(${dataUrl})`;
+        try { localStorage.setItem('talkie_bg', dataUrl); } catch(e) { console.warn('Image trop lourde pour le stockage local'); }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    $('resetBgBtn').addEventListener('click', () => {
+      bgLayer.style.backgroundImage = 'none';
+      localStorage.removeItem('talkie_bg');
+    });
 
     // ===== PWA & QR =====
     const installPwaBtn = $('installPwaBtn');
@@ -468,8 +541,8 @@
       peer = new Peer(myPeerId, { debug: 1 });
 
       peer.on('open', () => {
-        $('statusDot').className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50';
-        $('statusText').innerText = 'Prêt (Canal Libre)';
+        $('statusDot').className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 status-online transition-colors duration-500';
+        $('statusText').innerText = 'Prêt · Canal Libre';
       });
 
       peer.on('call', (call) => {
@@ -483,15 +556,13 @@
       peer.on('error', (err) => {
         console.error('PeerJS:', err);
         if (err.type === 'unavailable-id') { myPeerId = generateShortId(); updateMyIdUI(); createPeer(); return; }
-        updateTxRxStatus('Erreur', 'red');
+        updateTxRxStatus('Erreur Réseau', 'red');
       });
     }
 
-    // CORRECTION AUTOPLAY : Fonction pour débloquer le son
     function tryPlayAudio() {
       const audioEl = $('remoteAudio');
       if (!audioEl.srcObject) return;
-
       const playPromise = audioEl.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
@@ -504,7 +575,6 @@
       }
     }
 
-    // Si le son est bloqué, n'importe quel clic/toucher sur l'écran le débloque
     document.addEventListener('click', () => { if (autoplayBlocked) tryPlayAudio(); });
     document.addEventListener('touchstart', () => { if (autoplayBlocked) tryPlayAudio(); });
 
@@ -514,15 +584,13 @@
       $('statusText').innerText = 'Appareil Lié';
 
       call.on('stream', (remoteStream) => {
-        const audioEl = $('remoteAudio');
-        audioEl.srcObject = remoteStream;
-        tryPlayAudio(); // Tente de lire immédiatement
-        
+        $('remoteAudio').srcObject = remoteStream;
+        tryPlayAudio();
         attachRemoteVisualizer(remoteStream);
         if (!isTransmitting) updateStatusForMode();
       });
 
-      call.on('error', () => updateTxRxStatus('Erreur appel', 'red'));
+      call.on('error', () => updateTxRxStatus('Erreur Appel', 'red'));
       call.on('close', () => {
         $('currentPeerDisplay').innerText = 'Non connecté';
         $('statusText').innerText = 'Déconnecté';
@@ -531,32 +599,29 @@
       });
     }
 
-    function isValidPeerId(id) { return typeof id === 'string' && /^[A-Za-z0-9-]{3,64}$/.test(id); }
-
     function connectToPeer(targetId) {
       targetId = (targetId || '').trim();
-      if (!isValidPeerId(targetId) || targetId === myPeerId || !peer || !peer.open) return;
+      if (!targetId || targetId === myPeerId || !peer || !peer.open) return;
       const stream = gatedStream || localStream;
       if (!stream) return;
 
       try {
         const call = peer.call(targetId, stream);
         if (call) setupCallHandlers(call);
-        $('configModal').classList.add('hidden');
+        $('configModal').classList.remove('active');
       } catch (e) {}
     }
 
-    // ===== Événements UI =====
+    // ===== UI / Modales =====
     const pttBtn = $('pttBtn');
     pttBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       ensureAudioCtx();
-      switch (radioMode) {
-        case 'ptt':
-          try { pttBtn.setPointerCapture(e.pointerId); } catch (_) {}
-          setTx(true); break;
-        case 'toggle': setTx(!isTransmitting); break;
-        case 'full': setTx(!isTransmitting); break;
+      if (radioMode === 'ptt') {
+        try { pttBtn.setPointerCapture(e.pointerId); } catch (_) {}
+        setTx(true);
+      } else if (radioMode === 'full') {
+        setTx(!isTransmitting);
       }
     });
     pttBtn.addEventListener('pointerup', (e) => {
@@ -566,12 +631,15 @@
     });
     pttBtn.addEventListener('pointercancel', () => { if (radioMode === 'ptt') setTx(false); });
 
-    // Modales
-    $('helpBtn').addEventListener('click', () => $('helpModal').classList.remove('hidden'));
-    $('closeHelpBtn').addEventListener('click', () => $('helpModal').classList.add('hidden'));
-    $('gotItBtn').addEventListener('click', () => $('helpModal').classList.add('hidden'));
-    $('configBtn').addEventListener('click', () => $('configModal').classList.remove('hidden'));
-    $('closeConfigBtn').addEventListener('click', () => { $('configModal').classList.add('hidden'); stopScanner(); });
+    function openModal(id) { $(id).classList.add('active'); }
+    function closeModal(id) { $(id).classList.remove('active'); }
+
+    $('helpBtn').addEventListener('click', () => openModal('helpModal'));
+    $('closeHelpBtn').addEventListener('click', () => closeModal('helpModal'));
+    $('gotItBtn').addEventListener('click', () => closeModal('helpModal'));
+    $('configBtn').addEventListener('click', () => openModal('configModal'));
+    $('closeConfigBtn').addEventListener('click', () => { closeModal('configModal'); stopScanner(); });
+    
     $('connectPeerBtn').addEventListener('click', () => connectToPeer($('targetPeerId').value));
     $('targetPeerId').addEventListener('keydown', (e) => { if (e.key === 'Enter') connectToPeer($('targetPeerId').value); });
 
@@ -613,6 +681,8 @@
 
     // Init
     async function initApp() {
+      loadBg(); // Charge l'image de fond si elle existe
+      
       myPeerId = generateShortId();
       updateMyIdUI();
       updateModeUI();
@@ -624,9 +694,7 @@
             video: false
           });
           setupAudioPipeline();
-        } catch (err) {
-          alert('Accès microphone requis.');
-        }
+        } catch (err) { alert('Accès microphone requis.'); }
       }
       createPeer();
     }
