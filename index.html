@@ -5,15 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Talkie-Walkie PWA P2P</title>
 
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-  <!-- Dépendances -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -21,39 +18,27 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
   <style>
-    body {
-      touch-action: manipulation;
-      background-color: #0f172a;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    .glass-card {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .ptt-button {
-      background: radial-gradient(circle, #f97316 0%, #c2410c 100%);
-      box-shadow: 0 0 25px rgba(249, 115, 22, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
+    body { touch-action: manipulation; background:#0f172a; color:#f8fafc;
+           font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .glass-card { background: rgba(30,41,59,0.7); backdrop-filter: blur(12px);
+                  border: 1px solid rgba(255,255,255,0.08); }
+    .ptt-button { background: radial-gradient(circle,#f97316 0%,#c2410c 100%);
+                  box-shadow: 0 0 25px rgba(249,115,22,0.4), inset 0 2px 4px rgba(255,255,255,0.3);
+                  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
     .ptt-button:active, .ptt-button.active {
-      background: radial-gradient(circle, #ea580c 0%, #9a3412 100%);
-      box-shadow: 0 0 45px rgba(249, 115, 22, 0.8), inset 0 4px 8px rgba(0, 0, 0, 0.5);
-      transform: scale(0.96);
+      background: radial-gradient(circle,#ea580c 0%,#9a3412 100%);
+      box-shadow: 0 0 45px rgba(249,115,22,0.8), inset 0 4px 8px rgba(0,0,0,0.5);
+      transform: scale(0.96); }
+    .pulse-ring { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    @keyframes pulse { 0%,100%{opacity:.2;transform:scale(1)} 50%{opacity:.6;transform:scale(1.05)} }
+    #audioVisualizer { display:block; width:100%; height:100%; }
+    /* Mode selector */
+    .mode-btn { color:#94a3b8; transition:all .15s; }
+    .mode-btn.active-mode {
+      background: linear-gradient(to right,#f97316,#d97706);
+      color:#fff; box-shadow: 0 0 12px rgba(249,115,22,.4);
     }
-    .pulse-ring {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.2; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(1.05); }
-    }
-    #audioVisualizer { display: block; width: 100%; height: 100%; }
   </style>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body class="h-screen w-screen flex flex-col justify-between overflow-hidden select-none">
 
@@ -66,7 +51,7 @@
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <button id="helpBtn" aria-label="Aide" class="w-10 h-10 rounded-full glass-card hover:bg-slate-700 flex items-center justify-center text-orange-400 text-lg font-bold border border-orange-500/30 transition-all">?</button>
+      <button id="helpBtn" aria-label="Aide" class="w-10 h-10 rounded-full glass-card hover:bg-slate-700 flex items-center justify-center text-orange-400 text-lg font-bold border border-orange-500/30">?</button>
       <button id="configBtn" aria-label="Configuration" class="w-10 h-10 rounded-full glass-card hover:bg-slate-700 flex items-center justify-center text-slate-200">
         <i class="fa-solid fa-gear"></i>
       </button>
@@ -74,6 +59,15 @@
   </header>
 
   <main class="flex-1 flex flex-col items-center justify-center p-4 relative">
+
+    <!-- Sélecteur de mode -->
+    <div id="modeSelector" class="flex glass-card rounded-full p-1 mb-4 gap-1 text-[10px] sm:text-[11px]">
+      <button data-mode="ptt"    class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">PTT</button>
+      <button data-mode="toggle" class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">Toggle</button>
+      <button data-mode="vox"    class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">VOX</button>
+      <button data-mode="full"   class="mode-btn px-3 py-2 rounded-full font-bold uppercase tracking-wider">Continu</button>
+    </div>
+
     <div class="w-full max-w-sm h-20 mb-6 glass-card rounded-xl p-2 flex items-center justify-center overflow-hidden relative">
       <canvas id="audioVisualizer" class="w-full h-full"></canvas>
       <div id="peerInfo" class="absolute top-1 left-2 text-[10px] text-slate-400 font-mono bg-slate-900/60 px-1.5 py-0.5 rounded">
@@ -83,10 +77,10 @@
 
     <div class="relative flex items-center justify-center">
       <div id="pulseBg" class="absolute w-64 h-64 rounded-full bg-orange-500/10 pulse-ring pointer-events-none hidden"></div>
-      <button id="pttBtn" aria-label="Maintenir pour parler" class="ptt-button w-56 h-56 rounded-full flex flex-col items-center justify-center transition-transform duration-75 border-4 border-orange-400/30 z-20 cursor-pointer">
+      <button id="pttBtn" aria-label="Bouton principal" class="ptt-button w-56 h-56 rounded-full flex flex-col items-center justify-center transition-transform duration-75 border-4 border-orange-400/30 z-20 cursor-pointer">
         <i class="fa-solid fa-microphone text-5xl text-white mb-2"></i>
-        <span class="font-black text-xl tracking-wider text-white">MAINTENIR</span>
-        <span class="text-xs font-semibold text-orange-200 uppercase tracking-widest mt-1">POUR PARLER</span>
+        <span id="pttLabel" class="font-black text-xl tracking-wider text-white">MAINTENIR</span>
+        <span id="pttSub" class="text-xs font-semibold text-orange-200 uppercase tracking-widest mt-1">POUR PARLER</span>
       </button>
     </div>
 
@@ -99,74 +93,68 @@
   </footer>
 
   <button id="installPwaBtn" class="hidden fixed bottom-16 right-4 z-40 bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold px-4 py-2.5 rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-2 border border-orange-300/40 text-sm animate-bounce">
-    <i class="fa-solid fa-download"></i>
-    <span>Installer l'App</span>
+    <i class="fa-solid fa-download"></i><span>Installer l'App</span>
   </button>
 
   <!-- Modal Aide -->
   <div id="helpModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
     <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-700 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold text-orange-400 flex items-center gap-2"><i class="fa-solid fa-circle-question"></i> Guide d'utilisation</h3>
+        <h3 class="text-lg font-bold text-orange-400 flex items-center gap-2"><i class="fa-solid fa-circle-question"></i> Guide</h3>
         <button id="closeHelpBtn" aria-label="Fermer" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div class="space-y-4 text-sm text-slate-300 leading-relaxed">
+      <div class="space-y-3 text-sm text-slate-300">
         <section class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
-          <h4 class="font-semibold text-white mb-1 flex items-center gap-2"><span class="w-5 h-5 bg-orange-500/20 text-orange-400 rounded-full flex items-center justify-center text-xs">1</span> Réseau Wi-Fi Commun</h4>
-          <p class="text-xs text-slate-400">Les deux appareils doivent être sur le même réseau Wi-Fi local.</p>
+          <h4 class="font-semibold text-white mb-1">Modes d'émission</h4>
+          <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+            <li><b>PTT</b> : maintenir pour parler.</li>
+            <li><b>Toggle</b> : tap pour ouvrir / re-tap pour fermer.</li>
+            <li><b>VOX</b> : détection vocale auto (mains libres).</li>
+            <li><b>Continu</b> : duplex permanent, bouton = mute.</li>
+          </ul>
         </section>
         <section class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
-          <h4 class="font-semibold text-white mb-1 flex items-center gap-2"><span class="w-5 h-5 bg-orange-500/20 text-orange-400 rounded-full flex items-center justify-center text-xs">2</span> Connexion</h4>
-          <p class="text-xs text-slate-400">Ouvrez l'engrenage <i class="fa-solid fa-gear"></i>. Scannez le QR Code de l'autre appareil ou entrez son ID.</p>
+          <h4 class="font-semibold text-white mb-1">Connexion</h4>
+          <p class="text-xs text-slate-400">Ouvrez l'engrenage <i class="fa-solid fa-gear"></i> et scannez le QR code de l'autre appareil.</p>
         </section>
-        <section class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
-          <h4 class="font-semibold text-white mb-1 flex items-center gap-2"><span class="w-5 h-5 bg-orange-500/20 text-orange-400 rounded-full flex items-center justify-center text-xs">3</span> Push-To-Talk</h4>
-          <p class="text-xs text-slate-400">Maintenez le bouton central pour parler, relâchez pour écouter.</p>
-        </section>
-        <section class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
-          <h4 class="font-semibold text-white mb-1 flex items-center gap-2"><span class="w-5 h-5 bg-orange-500/20 text-orange-400 rounded-full flex items-center justify-center text-xs">4</span> HTTPS requis</h4>
-          <p class="text-xs text-slate-400">Le micro, la caméra et l'installation PWA nécessitent HTTPS (ou localhost).</p>
+        <section class="bg-red-900/30 p-3 rounded-xl border border-red-700/50">
+          <h4 class="font-semibold text-red-300 mb-1"><i class="fa-solid fa-headphones"></i> Casque recommandé</h4>
+          <p class="text-xs text-red-200/80">En VOX ou Continu, le micro restant ouvert, un casque évite le larsen (sifflement).</p>
         </section>
       </div>
-      <button id="gotItBtn" class="w-full mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl transition-all">Compris !</button>
+      <button id="gotItBtn" class="w-full mt-5 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 rounded-xl">Compris !</button>
     </div>
   </div>
 
-  <!-- Modal Configuration -->
+  <!-- Modal Config -->
   <div id="configModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
     <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-slate-700 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-bold text-orange-400">Configuration P2P</h3>
         <button id="closeConfigBtn" aria-label="Fermer" class="text-slate-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
       </div>
-
       <div class="mb-6 bg-slate-800/80 p-4 rounded-xl text-center border border-slate-700">
-        <span class="text-xs text-slate-400 block mb-1">Votre ID d'appareil</span>
-        <div id="myIdDisplay" class="font-mono text-xl font-bold text-orange-400 tracking-wider mb-3">Génération...</div>
+        <span class="text-xs text-slate-400 block mb-1">Votre ID</span>
+        <div id="myIdDisplay" class="font-mono text-xl font-bold text-orange-400 tracking-wider mb-3">...</div>
         <div id="qrcode" class="flex justify-center p-2 bg-white rounded-lg inline-block my-2"></div>
-        <p class="text-[11px] text-slate-400 mt-2">Faites scanner ce code par le second appareil</p>
       </div>
-
       <div class="space-y-3">
         <label for="targetPeerId" class="text-xs text-slate-300 font-semibold block">Se connecter à un interlocuteur</label>
         <div class="flex gap-2">
           <input type="text" id="targetPeerId" placeholder="Ex: TALK-123456" autocomplete="off" spellcheck="false" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-orange-500">
           <button id="connectPeerBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl text-sm">Lier</button>
         </div>
-
         <div class="relative flex py-2 items-center">
           <div class="flex-grow border-t border-slate-700"></div>
           <span class="flex-shrink mx-4 text-xs text-slate-500 uppercase">ou</span>
           <div class="flex-grow border-t border-slate-700"></div>
         </div>
-
         <button id="startScanBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl border border-slate-700 flex items-center justify-center gap-2 text-sm">
-          <i class="fa-solid fa-qrcode"></i> Scanner le QR Code de l'autre appareil
+          <i class="fa-solid fa-qrcode"></i> Scanner le QR Code
         </button>
-
         <div id="scannerContainer" class="hidden mt-3 relative rounded-xl overflow-hidden border border-orange-500/50">
           <video id="scannerVideo" class="w-full h-48 object-cover" playsinline muted></video>
-          <button id="stopScanBtn" aria-label="Arrêter le scan" class="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center">
+          <button id="stopScanBtn" aria-label="Arrêter" class="absolute top-2 right-2 bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -178,41 +166,43 @@
 
   <script>
     'use strict';
-
     const $ = (id) => document.getElementById(id);
+
+    // ===== Constantes =====
+    const VOX_THRESHOLD = 25;     // 0-255 : à ajuster si trop/peu sensible
+    const VOX_HANG_MS   = 800;    // durée de maintien après la fin de voix
 
     // ===== État =====
     let myPeerId = null;
     let peer = null;
     let activeCall = null;
-    let localStream = null;
+    let localStream = null;         // flux brut du micro
+    let gatedStream = null;         // flux transmis (via GainNode)
     let audioCtx = null;
     let localAnalyser = null;
     let remoteAnalyser = null;
+    let txGain = null;
+    let txDestination = null;
     let visualizerStarted = false;
+    let radioMode = 'ptt';
     let isTransmitting = false;
+    let voxLoopStarted = false;
+    let voxHangTimer = null;
     let deferredPrompt = null;
     let videoStream = null;
     let scanInterval = null;
 
     // ===== Utilitaires =====
     const isSecure = () => window.isSecureContext ||
-      location.hostname === 'localhost' ||
-      location.hostname === '127.0.0.1';
+      location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
-    function generateShortId() {
-      const num = Math.floor(100000 + Math.random() * 900000);
-      return `TALK-${num}`;
-    }
+    const generateShortId = () =>
+      `TALK-${Math.floor(100000 + Math.random() * 900000)}`;
 
     function ensureAudioCtx() {
       if (!audioCtx) {
-        try {
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-          console.warn('AudioContext indisponible', e);
-          return null;
-        }
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { console.warn('AudioContext KO', e); return null; }
       }
       if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
       return audioCtx;
@@ -223,63 +213,101 @@
       el.innerText = text;
       const base = "mt-8 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase border";
       const map = {
-        orange:  "bg-orange-500/20 text-orange-400 border-orange-500/50",
-        emerald: "bg-emerald-500/20 text-emerald-400 border-emerald-500/50",
-        red:     "bg-red-500/20 text-red-400 border-red-500/50",
-        gray:    "bg-slate-800 text-slate-500 border-slate-700"
+        orange: "bg-orange-500/20 text-orange-400 border-orange-500/50",
+        emerald:"bg-emerald-500/20 text-emerald-400 border-emerald-500/50",
+        red:    "bg-red-500/20 text-red-400 border-red-500/50",
+        gray:   "bg-slate-800 text-slate-500 border-slate-700"
       };
       el.className = `${base} ${map[color] || map.gray}`;
     }
 
-    // ===== Beeps radio =====
     function playRadioBeep(type) {
       const ctx = ensureAudioCtx();
       if (!ctx) return;
       try {
         if (type === 'squelch') {
-          const bufSize = Math.floor(ctx.sampleRate * 0.05);
-          const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-          const out = buffer.getChannelData(0);
-          for (let i = 0; i < bufSize; i++) out[i] = Math.random() * 2 - 1;
-          const src = ctx.createBufferSource();
-          src.buffer = buffer;
-          const gain = ctx.createGain();
-          gain.gain.setValueAtTime(0.15, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
-          src.connect(gain).connect(ctx.destination);
-          src.start();
+          const sz = Math.floor(ctx.sampleRate * 0.05);
+          const b = ctx.createBuffer(1, sz, ctx.sampleRate);
+          const o = b.getChannelData(0);
+          for (let i = 0; i < sz; i++) o[i] = Math.random() * 2 - 1;
+          const src = ctx.createBufferSource(); src.buffer = b;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.15, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+          src.connect(g).connect(ctx.destination); src.start();
         } else if (type === 'roger') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
+          const osc = ctx.createOscillator(); const g = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(1200, ctx.currentTime);
           osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.08);
-          gain.gain.setValueAtTime(0.1, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.16);
-          osc.connect(gain).connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.16);
+          g.gain.setValueAtTime(0.1, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.16);
+          osc.connect(g).connect(ctx.destination);
+          osc.start(); osc.stop(ctx.currentTime + 0.16);
         }
-      } catch (err) {
-        console.warn('Web Audio:', err);
-      }
+      } catch (e) { console.warn('beep:', e); }
     }
 
-    // ===== Visualiseur audio =====
-    function attachLocalVisualizer(stream) {
+    // ===== Pipeline Audio (GainNode pour contrôle TX) =====
+    function setupAudioPipeline() {
       const ctx = ensureAudioCtx();
-      if (!ctx) return;
+      if (!ctx || !localStream) return;
       try {
-        const src = ctx.createMediaStreamSource(stream);
+        const src = ctx.createMediaStreamSource(localStream);
+
+        // Analyser (visualiseur + détection VOX)
         localAnalyser = ctx.createAnalyser();
         localAnalyser.fftSize = 64;
         src.connect(localAnalyser);
+
+        // Gain qui va contrôler l'émission
+        txGain = ctx.createGain();
+        txGain.gain.value = 0;
+
+        txDestination = ctx.createMediaStreamDestination();
+        src.connect(txGain).connect(txDestination);
+        gatedStream = txDestination.stream;
       } catch (e) {
-        console.warn('visualizer local:', e);
+        console.warn('pipeline audio KO, fallback track.enabled', e);
+        txGain = null;
+        gatedStream = null;
       }
+
       startVisualizerLoop();
+      startVOXLoop();
     }
 
+    // Applique l'état d'émission (gain OU track.enabled en fallback)
+    function applyTxState() {
+      if (txGain && audioCtx) {
+        txGain.gain.setTargetAtTime(
+          isTransmitting ? 1 : 0,
+          audioCtx.currentTime,
+          0.01
+        );
+      } else if (localStream) {
+        const t = localStream.getAudioTracks()[0];
+        if (t) t.enabled = isTransmitting;
+      }
+    }
+
+    // Changement d'état d'émission (avec beep sauf en mode full)
+    function setTx(on, opts = {}) {
+      const was = isTransmitting;
+      isTransmitting = !!on;
+      applyTxState();
+
+      if (!opts.silent && on !== was && radioMode !== 'full') {
+        playRadioBeep(on ? 'squelch' : 'roger');
+        if (navigator.vibrate) navigator.vibrate(on ? 50 : [30, 30]);
+      }
+
+      $('pttBtn').classList.toggle('active', isTransmitting);
+      $('pulseBg').classList.toggle('hidden', !isTransmitting);
+      updateStatusForMode();
+    }
+
+    // ===== Visualiseur =====
     function attachRemoteVisualizer(stream) {
       const ctx = ensureAudioCtx();
       if (!ctx) return;
@@ -288,16 +316,13 @@
         remoteAnalyser = ctx.createAnalyser();
         remoteAnalyser.fftSize = 64;
         src.connect(remoteAnalyser);
-      } catch (e) {
-        console.warn('visualizer remote:', e);
-      }
+      } catch (e) { console.warn('viz remote:', e); }
       startVisualizerLoop();
     }
 
     function startVisualizerLoop() {
       if (visualizerStarted) return;
       visualizerStarted = true;
-
       const canvas = $('audioVisualizer');
       const ctx = canvas.getContext('2d');
       const buf = new Uint8Array(32);
@@ -309,29 +334,126 @@
         const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
         if (canvas.width !== w) canvas.width = w;
         if (canvas.height !== h) canvas.height = h;
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const an = isTransmitting ? localAnalyser : (remoteAnalyser || localAnalyser);
+        let an;
+        if (radioMode === 'full') an = localAnalyser;
+        else if (isTransmitting) an = localAnalyser;
+        else an = remoteAnalyser || localAnalyser;
         if (!an) return;
 
         an.getByteFrequencyData(buf);
-        const barW = canvas.width / buf.length;
+        const bw = canvas.width / buf.length;
         for (let i = 0; i < buf.length; i++) {
           const bh = (buf[i] / 255) * canvas.height;
           if (bh < 1) continue;
-          ctx.fillStyle = '#f97316';
-          ctx.fillRect(i * barW, canvas.height - bh, Math.max(1, barW - 1), bh);
+          ctx.fillStyle = radioMode === 'vox' && !isTransmitting
+            ? '#64748b' : '#f97316';
+          ctx.fillRect(i * bw, canvas.height - bh, Math.max(1, bw - 1), bh);
         }
       }
       draw();
     }
 
+    // ===== VOX (détection vocale auto) =====
+    function startVOXLoop() {
+      if (voxLoopStarted) return;
+      voxLoopStarted = true;
+      const buf = new Uint8Array(32);
+
+      function loop() {
+        requestAnimationFrame(loop);
+        if (radioMode !== 'vox' || !localAnalyser) return;
+
+        localAnalyser.getByteFrequencyData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i];
+        const avg = sum / buf.length;
+
+        if (avg > VOX_THRESHOLD) {
+          if (!isTransmitting) setTx(true);
+          clearTimeout(voxHangTimer);
+          voxHangTimer = setTimeout(() => {
+            if (radioMode === 'vox' && isTransmitting) setTx(false);
+          }, VOX_HANG_MS);
+        }
+      }
+      loop();
+    }
+
+    // ===== Gestion des modes =====
+    function updateStatusForMode() {
+      if (radioMode === 'full') {
+        updateTxRxStatus(
+          isTransmitting ? 'LIVE · DUPLEX' : 'MUTÉ',
+          isTransmitting ? 'orange' : 'gray'
+        );
+      } else if (isTransmitting) {
+        updateTxRxStatus('ÉMISSION (TX)', 'orange');
+      } else if (radioMode === 'vox') {
+        updateTxRxStatus(activeCall ? 'VOX · ÉCOUTE' : 'VOX · VEILLE',
+                         activeCall ? 'emerald' : 'gray');
+      } else {
+        updateTxRxStatus(activeCall ? 'RÉCEPTION (RX)' : 'Veille',
+                         activeCall ? 'emerald' : 'gray');
+      }
+    }
+
+    function setMode(mode) {
+      if (!['ptt','toggle','vox','full'].includes(mode)) return;
+      if (mode === radioMode) return;
+      radioMode = mode;
+
+      clearTimeout(voxHangTimer);
+      isTransmitting = false;
+      applyTxState();
+      updateModeUI();
+
+      if (mode === 'full') {
+        // Micro ouvert immédiatement, silencieux
+        setTx(true, { silent: true });
+      } else {
+        updateStatusForMode();
+      }
+    }
+
+    function updateModeUI() {
+      document.querySelectorAll('.mode-btn').forEach(b => {
+        b.classList.toggle('active-mode', b.dataset.mode === radioMode);
+      });
+
+      const icon = $('pttBtn').querySelector('i');
+      const label = $('pttLabel');
+      const sub = $('pttSub');
+
+      switch (radioMode) {
+        case 'ptt':
+          icon.className = 'fa-solid fa-microphone text-5xl text-white mb-2';
+          label.textContent = 'MAINTENIR';
+          sub.textContent = 'POUR PARLER';
+          break;
+        case 'toggle':
+          icon.className = 'fa-solid fa-microphone text-5xl text-white mb-2';
+          label.textContent = 'TOUCHER';
+          sub.textContent = 'POUR OUVRIR';
+          break;
+        case 'vox':
+          icon.className = 'fa-solid fa-wave-square text-5xl text-white mb-2';
+          label.textContent = 'VOX';
+          sub.textContent = 'DÉTECTION AUTO';
+          break;
+        case 'full':
+          icon.className = 'fa-solid fa-phone-volume text-5xl text-white mb-2';
+          label.textContent = 'MUTE';
+          sub.textContent = 'DUPLEX PERMANENT';
+          break;
+      }
+    }
+
     // ===== PWA Install =====
     const installPwaBtn = $('installPwaBtn');
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
+      e.preventDefault(); deferredPrompt = e;
       installPwaBtn.classList.remove('hidden');
     });
     installPwaBtn.addEventListener('click', async () => {
@@ -345,79 +467,55 @@
     });
     window.addEventListener('appinstalled', () => installPwaBtn.classList.add('hidden'));
 
-    // Enregistrement service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW:', e));
+        navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e));
       });
     }
 
     // ===== QR Code =====
     function renderQR() {
-      const container = $('qrcode');
-      container.innerHTML = '';
+      const c = $('qrcode'); c.innerHTML = '';
       try {
-        new QRCode(container, {
-          text: myPeerId,
-          width: 128, height: 128,
-          colorDark: '#0f172a',
-          colorLight: '#ffffff',
+        new QRCode(c, {
+          text: myPeerId, width: 128, height: 128,
+          colorDark: '#0f172a', colorLight: '#ffffff',
           correctLevel: QRCode.CorrectLevel.H
         });
-      } catch (e) {
-        console.warn('QR:', e);
-      }
+      } catch (e) { console.warn('QR:', e); }
     }
-
-    function updateMyIdUI() {
-      $('myIdDisplay').innerText = myPeerId;
-      renderQR();
-    }
+    function updateMyIdUI() { $('myIdDisplay').innerText = myPeerId; renderQR(); }
 
     // ===== PeerJS =====
     function createPeer() {
-      if (peer) {
-        try { peer.destroy(); } catch (_) {}
-        peer = null;
-      }
+      if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
       peer = new Peer(myPeerId, { debug: 1 });
 
-      peer.on('open', (id) => {
+      peer.on('open', () => {
         $('statusDot').className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50';
         $('statusText').innerText = 'Prêt (Canal Libre)';
       });
 
       peer.on('call', (call) => {
-        if (!localStream) {
+        const stream = gatedStream || localStream;
+        if (!stream) {
           try { call.close(); } catch (_) {}
           updateTxRxStatus('Micro indisponible', 'red');
           return;
         }
-        call.answer(localStream);
+        call.answer(stream);
         setupCallHandlers(call);
       });
 
-      peer.on('disconnected', () => {
-        try { peer.reconnect(); } catch (_) {}
-      });
+      peer.on('disconnected', () => { try { peer.reconnect(); } catch (_) {} });
 
       peer.on('error', (err) => {
         console.error('PeerJS:', err);
         if (err.type === 'unavailable-id') {
-          // Collision : on régénère l'ID et on recrée le Peer
-          myPeerId = generateShortId();
-          updateMyIdUI();
-          createPeer();
-          return;
+          myPeerId = generateShortId(); updateMyIdUI(); createPeer(); return;
         }
-        if (err.type === 'peer-unavailable') {
-          updateTxRxStatus('Pair introuvable', 'red');
-          return;
-        }
-        if (err.type === 'network' || err.type === 'server-error') {
-          updateTxRxStatus('Erreur réseau', 'red');
-          return;
-        }
+        if (err.type === 'peer-unavailable') { updateTxRxStatus('Pair introuvable', 'red'); return; }
+        if (err.type === 'network' || err.type === 'server-error') { updateTxRxStatus('Erreur réseau', 'red'); return; }
         updateTxRxStatus('Erreur connexion', 'red');
       });
     }
@@ -430,158 +528,107 @@
       call.on('stream', (remoteStream) => {
         const audioEl = $('remoteAudio');
         audioEl.srcObject = remoteStream;
-        audioEl.play().catch(() => {
-          // Autoplay bloqué (Safari) : nécessitera un tap utilisateur
-          console.warn('Autoplay audio bloqué, tap requis');
-        });
+        audioEl.play().catch(() => console.warn('Autoplay bloqué, tap requis'));
         attachRemoteVisualizer(remoteStream);
-        if (!isTransmitting) updateTxRxStatus('RÉCEPTION (RX)', 'emerald');
+        if (!isTransmitting) updateStatusForMode();
       });
 
-      call.on('error', (err) => {
-        console.error('Call error:', err);
-        updateTxRxStatus('Erreur appel', 'red');
-      });
+      call.on('error', (err) => { console.error('Call err:', err); updateTxRxStatus('Erreur appel', 'red'); });
 
       call.on('close', () => {
         $('currentPeerDisplay').innerText = 'Non connecté';
         $('statusText').innerText = 'Déconnecté';
         activeCall = null;
         remoteAnalyser = null;
-        updateTxRxStatus('Veille', 'gray');
+        updateStatusForMode();
       });
     }
 
-    function isValidPeerId(id) {
-      return typeof id === 'string' && /^[A-Za-z0-9-]{3,64}$/.test(id);
-    }
+    function isValidPeerId(id) { return typeof id === 'string' && /^[A-Za-z0-9-]{3,64}$/.test(id); }
 
     function connectToPeer(targetId) {
       targetId = (targetId || '').trim();
-      if (!isValidPeerId(targetId)) {
-        updateTxRxStatus('ID invalide', 'red');
-        return;
-      }
-      if (targetId === myPeerId) {
-        updateTxRxStatus('Impossible de se lier à soi-même', 'red');
-        return;
-      }
-      if (!peer || !peer.open) {
-        updateTxRxStatus('Peer non prêt', 'red');
-        return;
-      }
-      if (!localStream) {
-        updateTxRxStatus('Micro indisponible', 'red');
-        return;
-      }
+      if (!isValidPeerId(targetId)) { updateTxRxStatus('ID invalide', 'red'); return; }
+      if (targetId === myPeerId) { updateTxRxStatus('Impossible de se lier à soi-même', 'red'); return; }
+      if (!peer || !peer.open) { updateTxRxStatus('Peer non prêt', 'red'); return; }
+      const stream = gatedStream || localStream;
+      if (!stream) { updateTxRxStatus('Micro indisponible', 'red'); return; }
 
       try {
-        const call = peer.call(targetId, localStream);
-        if (!call) {
-          updateTxRxStatus('Appel impossible', 'red');
-          return;
-        }
+        const call = peer.call(targetId, stream);
+        if (!call) { updateTxRxStatus('Appel impossible', 'red'); return; }
         setupCallHandlers(call);
         $('configModal').classList.add('hidden');
-      } catch (e) {
-        console.error(e);
-        updateTxRxStatus('Échec de connexion', 'red');
-      }
+      } catch (e) { console.error(e); updateTxRxStatus('Échec connexion', 'red'); }
     }
 
-    // ===== PTT =====
+    // ===== Bouton principal : comportement dépendant du mode =====
     const pttBtn = $('pttBtn');
-    const pulseBg = $('pulseBg');
 
-    function startTalking() {
-      ensureAudioCtx();
-      if (!localStream) {
-        updateTxRxStatus('Micro indisponible', 'red');
-        return;
-      }
-      isTransmitting = true;
-      localStream.getAudioTracks()[0].enabled = true;
-      pttBtn.classList.add('active');
-      pulseBg.classList.remove('hidden');
-      updateTxRxStatus('ÉMISSION (TX)', 'orange');
-      playRadioBeep('squelch');
-      if (navigator.vibrate) navigator.vibrate(50);
-    }
-
-    function stopTalking() {
-      if (!localStream) return;
-      if (!isTransmitting) return;
-      isTransmitting = false;
-      localStream.getAudioTracks()[0].enabled = false;
-      pttBtn.classList.remove('active');
-      pulseBg.classList.add('hidden');
-      updateTxRxStatus(activeCall ? 'RÉCEPTION (RX)' : 'Veille',
-                       activeCall ? 'emerald' : 'gray');
-      playRadioBeep('roger');
-      if (navigator.vibrate) navigator.vibrate([30, 30]);
-    }
-
-    // Pointer capture : le PTT reste actif même si le doigt glisse hors du bouton
     pttBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      try { pttBtn.setPointerCapture(e.pointerId); } catch (_) {}
-      startTalking();
+      ensureAudioCtx();
+      switch (radioMode) {
+        case 'ptt':
+          try { pttBtn.setPointerCapture(e.pointerId); } catch (_) {}
+          setTx(true);
+          break;
+        case 'toggle':
+          setTx(!isTransmitting);
+          break;
+        case 'full':
+          setTx(!isTransmitting); // toggle mute
+          break;
+        case 'vox':
+          // géré automatiquement, pas d'action manuelle
+          break;
+      }
     });
+
     pttBtn.addEventListener('pointerup', (e) => {
       e.preventDefault();
       try { pttBtn.releasePointerCapture(e.pointerId); } catch (_) {}
-      stopTalking();
+      if (radioMode === 'ptt') setTx(false);
     });
+
     pttBtn.addEventListener('pointercancel', (e) => {
       e.preventDefault();
-      stopTalking();
+      if (radioMode === 'ptt') setTx(false);
     });
 
     // ===== Modales =====
-    const helpModal = $('helpModal');
-    const configModal = $('configModal');
-
-    $('helpBtn').addEventListener('click', () => helpModal.classList.remove('hidden'));
-    $('closeHelpBtn').addEventListener('click', () => helpModal.classList.add('hidden'));
-    $('gotItBtn').addEventListener('click', () => helpModal.classList.add('hidden'));
-
-    $('configBtn').addEventListener('click', () => configModal.classList.remove('hidden'));
+    $('helpBtn').addEventListener('click', () => $('helpModal').classList.remove('hidden'));
+    $('closeHelpBtn').addEventListener('click', () => $('helpModal').classList.add('hidden'));
+    $('gotItBtn').addEventListener('click', () => $('helpModal').classList.add('hidden'));
+    $('configBtn').addEventListener('click', () => $('configModal').classList.remove('hidden'));
     $('closeConfigBtn').addEventListener('click', () => {
-      configModal.classList.add('hidden');
-      stopScanner();
+      $('configModal').classList.add('hidden'); stopScanner();
     });
-
-    $('connectPeerBtn').addEventListener('click', () => {
-      connectToPeer($('targetPeerId').value);
-    });
+    $('connectPeerBtn').addEventListener('click', () => connectToPeer($('targetPeerId').value));
     $('targetPeerId').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') connectToPeer($('targetPeerId').value);
     });
 
-    // ===== Scanner QR =====
-    const scannerContainer = $('scannerContainer');
-    const scannerVideo = $('scannerVideo');
-    const startScanBtn = $('startScanBtn');
-    const stopScanBtn = $('stopScanBtn');
+    // ===== Sélecteur de mode =====
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => setMode(btn.dataset.mode));
+    });
 
-    startScanBtn.addEventListener('click', async () => {
+    // ===== Scanner QR =====
+    $('startScanBtn').addEventListener('click', async () => {
       try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        });
-        scannerVideo.srcObject = videoStream;
-        await scannerVideo.play();
-        scannerContainer.classList.remove('hidden');
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const v = $('scannerVideo'); v.srcObject = videoStream; await v.play();
+        $('scannerContainer').classList.remove('hidden');
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
         scanInterval = setInterval(() => {
-          if (scannerVideo.readyState < 2) return;
-          canvas.width = scannerVideo.videoWidth;
-          canvas.height = scannerVideo.videoHeight;
+          if (v.readyState < 2) return;
+          canvas.width = v.videoWidth; canvas.height = v.videoHeight;
           if (!canvas.width || !canvas.height) return;
-          ctx.drawImage(scannerVideo, 0, 0);
+          ctx.drawImage(v, 0, 0);
           const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const code = jsQR(img.data, img.width, img.height);
           if (code && code.data) {
@@ -592,7 +639,7 @@
         }, 300);
       } catch (err) {
         console.error(err);
-        alert('Accès caméra impossible. Vérifiez les permissions et HTTPS.');
+        alert('Accès caméra impossible (HTTPS + permission requis).');
       }
     });
 
@@ -602,31 +649,37 @@
         videoStream.getTracks().forEach(t => t.stop());
         videoStream = null;
       }
-      scannerContainer.classList.add('hidden');
+      $('scannerContainer').classList.add('hidden');
     }
-    stopScanBtn.addEventListener('click', stopScanner);
+    $('stopScanBtn').addEventListener('click', stopScanner);
 
     // ===== Init =====
     async function initApp() {
-      if (!isSecure()) {
-        console.warn('⚠ HTTPS requis pour micro/caméra/PWA.');
-      }
+      if (!isSecure()) console.warn('⚠ HTTPS requis pour micro/caméra/PWA.');
 
       myPeerId = generateShortId();
       updateMyIdUI();
+      updateModeUI();
 
-      // Micro
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Votre navigateur ne supporte pas getUserMedia. HTTPS requis.');
+        alert('Navigateur non compatible getUserMedia. HTTPS requis.');
       } else {
         try {
-          localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          localStream.getAudioTracks()[0].enabled = false;
-          attachLocalVisualizer(localStream);
-          startVisualizerLoop();
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            },
+            video: false
+          });
+          // Désactive le track en fallback si GainNode indisponible
+          const t = localStream.getAudioTracks()[0];
+          if (t) t.enabled = false;
+          setupAudioPipeline();
         } catch (err) {
           console.error(err);
-          alert('Accès microphone requis. Vérifiez les permissions et HTTPS.');
+          alert('Accès microphone requis (permission + HTTPS).');
         }
       }
 
