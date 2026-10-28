@@ -63,8 +63,8 @@ jobs:
             add_permission "ACCESS_COARSE_LOCATION"
             touch .need_geolocation_shim
           fi
-          if grep -rq -E "getUserMedia.*video|video.*getUserMedia" .; then add_permission "CAMERA"; touch .need_camera_shim; fi
-          if grep -rq -E "getUserMedia.*audio|audio.*getUserMedia" .; then
+          if grep -rq "getUserMedia" . && grep -rq -E "video\s*:\s*(true|\{)" .; then add_permission "CAMERA"; touch .need_camera_shim; fi
+          if grep -rq "getUserMedia" . && grep -rq -E "audio\s*:\s*(true|\{)" .; then
             add_permission "RECORD_AUDIO"
             add_permission "MODIFY_AUDIO_SETTINGS"
             add_permission "FOREGROUND_SERVICE"
@@ -113,11 +113,9 @@ jobs:
               public void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   
-                  // Autoriser la lecture audio sans interaction obligatoire
                   WebView webView = this.bridge.getWebView();
                   webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
           
-                  // Demande native au démarrage (Ne casse pas Capacitor)
                   List<String> permissionsNeeded = new ArrayList<>();
                   
                   if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
