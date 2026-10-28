@@ -671,7 +671,7 @@
     }
     $('stopScanBtn').addEventListener('click', stopScanner);
 
-    // ===== Initialisation Globale =====
+    // ===== Initialisation Globale (avec gestion d'erreur Micro) =====
     async function initApp() {
       loadBg(); // Charge l'image de fond si elle existe
       
@@ -688,7 +688,28 @@
           });
           setupAudioPipeline();
         } catch (err) { 
-          alert('Accès microphone requis pour le Talkie-Walkie.');
+          console.error("Erreur micro:", err);
+          
+          // Affichage d'une popup d'erreur propre si le micro est refusé
+          const errorDiv = document.createElement('div');
+          errorDiv.className = "fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4";
+          errorDiv.innerHTML = `
+            <div class="glass-card max-w-sm w-full rounded-3xl p-6 text-center border border-red-500/30">
+              <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-microphone-slash text-2xl text-red-500"></i>
+              </div>
+              <h3 class="text-lg font-bold text-white mb-2">Microphone requis</h3>
+              <p class="text-sm text-slate-300 mb-6">
+                L'application a besoin d'accéder au microphone pour fonctionner.<br><br>
+                Veuillez autoriser l'accès dans les paramètres de votre téléphone, puis réessayer.
+              </p>
+              <button onclick="location.reload()" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold py-3 rounded-xl shadow-lg">
+                Réessayer
+              </button>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          return; // On arrête l'initialisation
         }
       }
       createPeer();
