@@ -109,7 +109,7 @@
         </section>
         <section class="bg-red-900/20 p-4 rounded-2xl border border-red-700/30">
           <h4 class="font-semibold text-red-300 mb-1 flex items-center gap-2"><i class="fa-solid fa-headphones"></i> Casque recommandé</h4>
-          <p class="text-xs text-red-200/70">En mode Continu, l'utilisation d'un casque évite le larsen (sifflement) dû au retour du haut-parleur dans le micro.</p>
+          <p class="text-xs text-red-200/70">En mode Continu, l'utilisation d'un casque évite le larsen (sifflement).</p>
         </section>
       </div>
       <button id="gotItBtn" class="w-full mt-6 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg">Compris !</button>
@@ -234,7 +234,7 @@
       } catch (e) {}
     }
 
-    // ===== Demande de micro déclenchée par l'utilisateur =====
+    // Demande de micro
     async function requestMicAndStart() {
       if (localStream) return true;
       try {
@@ -253,13 +253,13 @@
             <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <i class="fa-solid fa-microphone-slash text-2xl text-red-500"></i>
             </div>
-            <h3 class="text-lg font-bold text-white mb-2">Microphone requis</h3>
+            <h3 class="text-lg font-bold text-white mb-2">Microphone bloqué</h3>
             <p class="text-sm text-slate-300 mb-6">
-              L'application a besoin d'accéder au microphone pour fonctionner.<br><br>
-              Veuillez autoriser l'accès dans les paramètres de votre téléphone, puis réessayer.
+              L'application n'a pas pu accéder au microphone.<br><br>
+              Allez dans les <b>Paramètres</b> de votre téléphone > <b>Applications</b> > <b>Talkie-Walkie</b> > <b>Autorisations</b> et activez le <b>Microphone</b>.
             </p>
-            <button onclick="location.reload()" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold py-3 rounded-xl shadow-lg">
-              Réessayer
+            <button onclick="this.closest('.fixed').remove()" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold py-3 rounded-xl shadow-lg">
+              Compris
             </button>
           </div>
         `;
@@ -320,7 +320,7 @@
       draw();
     }
 
-    // Gestion des modes
+    // Modes
     function updateStatusForMode() {
       if (radioMode === 'full') updateTxRxStatus(isTransmitting ? 'LIVE · DUPLEX' : 'MUTÉ', isTransmitting ? 'orange' : 'gray');
       else if (isTransmitting) updateTxRxStatus('ÉMISSION (TX)', 'orange');
@@ -354,7 +354,7 @@
     });
     $('resetBgBtn').addEventListener('click', () => { $('bgLayer').style.backgroundImage = 'none'; localStorage.removeItem('talkie_bg'); });
 
-    // QR Code & PeerJS
+    // PeerJS
     function renderQR() { const c = $('qrcode'); c.innerHTML = ''; try { new QRCode(c, { text: myPeerId, width: 128, height: 128, colorDark: '#0f172a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }); } catch (e) {} }
     function updateMyIdUI() { $('myIdDisplay').innerText = myPeerId; renderQR(); }
     function createPeer() {
@@ -392,7 +392,6 @@
       call.on('close', () => { $('currentPeerDisplay').innerText = 'Non connecté'; $('statusText').innerText = 'Déconnecté'; activeCall = null; remoteAnalyser = null; updateStatusForMode(); });
     }
 
-    // Connexion nécessitant le micro
     async function connectToPeer(targetId) {
       targetId = (targetId || '').trim();
       if (!targetId || targetId === myPeerId || !peer || !peer.open) return;
@@ -417,7 +416,6 @@
     $('connectPeerBtn').addEventListener('click', () => connectToPeer($('targetPeerId').value));
     $('targetPeerId').addEventListener('keydown', (e) => { if (e.key === 'Enter') connectToPeer($('targetPeerId').value); });
 
-    // Gestionnaire PTT (Demande le micro au clique)
     const pttBtn = $('pttBtn');
     pttBtn.addEventListener('pointerdown', async (e) => {
       e.preventDefault(); ensureAudioCtx();
@@ -438,7 +436,6 @@
     });
     pttBtn.addEventListener('pointercancel', () => { if (radioMode === 'ptt') setTx(false); });
 
-    // Mode selector (Demande le micro si on passe en mode Full)
     document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (btn.dataset.mode === 'full') {
