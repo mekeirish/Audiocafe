@@ -7,12 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Talkie-Walkie P2P</title>
 
-  <!-- PWA & Icônes -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
 
-  <!-- Librairies Externes -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -20,113 +18,31 @@
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
   <style>
-    :root {
-      --accent: #f97316;
-    }
-    body {
-      touch-action: manipulation;
-      background-color: #0b1120;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    /* Fond dynamique personnalisable */
-    #bgLayer {
-      position: fixed;
-      inset: 0;
-      z-index: -10;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transition: background-image 0.8s ease-in-out;
-    }
-    #bgOverlay {
-      position: fixed;
-      inset: 0;
-      z-index: -9;
-      background: rgba(15, 23, 42, 0.85); /* Filtre sombre pour la lisibilité */
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    /* Glassmorphism Premium */
-    .glass-card {
-      background: rgba(30, 41, 59, 0.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-    }
-
-    /* Bouton PTT */
-    .ptt-button {
-      background: linear-gradient(135deg, #f97316 0%, #c2410c 100%);
-      box-shadow: 0 0 40px rgba(249, 115, 22, 0.3), inset 0 4px 6px rgba(255, 255, 255, 0.2);
-      user-select: none;
-      -webkit-user-select: none;
-      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .ptt-button:active, .ptt-button.active {
-      background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%);
-      box-shadow: 0 0 60px rgba(249, 115, 22, 0.7), inset 0 8px 12px rgba(0, 0, 0, 0.4);
-      transform: scale(0.95);
-    }
-
-    /* Animations */
-    .pulse-ring {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 0.15; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.05); }
-    }
-
-    .modal-overlay {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .modal-content {
-      transform: scale(0.95) translateY(10px);
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .modal-overlay.active .modal-content {
-      transform: scale(1) translateY(0);
-    }
-
+    :root { --accent: #f97316; }
+    body { touch-action: manipulation; background-color: #0b1120; color: #f8fafc; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    #bgLayer { position: fixed; inset: 0; z-index: -10; background-size: cover; background-position: center; background-repeat: no-repeat; transition: background-image 0.8s ease-in-out; }
+    #bgOverlay { position: fixed; inset: 0; z-index: -9; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .glass-card { background: rgba(30, 41, 59, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
+    .ptt-button { background: linear-gradient(135deg, #f97316 0%, #c2410c 100%); box-shadow: 0 0 40px rgba(249, 115, 22, 0.3), inset 0 4px 6px rgba(255, 255, 255, 0.2); user-select: none; -webkit-user-select: none; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+    .ptt-button:active, .ptt-button.active { background: linear-gradient(135deg, #ea580c 0%, #9a3412 100%); box-shadow: 0 0 60px rgba(249, 115, 22, 0.7), inset 0 8px 12px rgba(0, 0, 0, 0.4); transform: scale(0.95); }
+    .pulse-ring { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.15; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.05); } }
+    .modal-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-content { transform: scale(0.95) translateY(10px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
     .status-online { animation: glow 2s infinite alternate; }
-    @keyframes glow {
-      from { box-shadow: 0 0 5px #10b981, 0 0 10px #10b981; }
-      to { box-shadow: 0 0 15px #10b981, 0 0 25px #10b981; }
-    }
-
+    @keyframes glow { from { box-shadow: 0 0 5px #10b981, 0 0 10px #10b981; } to { box-shadow: 0 0 15px #10b981, 0 0 25px #10b981; } }
     #audioVisualizer { display: block; width: 100%; height: 100%; }
-    
-    /* Segmented Control */
-    .mode-btn {
-      color: #94a3b8;
-      transition: all 0.3s ease;
-      border-radius: 9999px;
-    }
-    .mode-btn.active-mode {
-      background: linear-gradient(135deg, #f97316, #d97706);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
-    }
+    .mode-btn { color: #94a3b8; transition: all 0.3s ease; border-radius: 9999px; }
+    .mode-btn.active-mode { background: linear-gradient(135deg, #f97316, #d97706); color: #fff; box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4); }
   </style>
 </head>
 <body class="h-screen w-screen flex flex-col justify-between overflow-hidden select-none">
 
-  <!-- Arrière-plan Personnalisable -->
   <div id="bgLayer"></div>
   <div id="bgOverlay"></div>
 
-  <!-- Bandeau Autoplay (si le son est bloqué) -->
   <div id="autoplayAlert" class="hidden fixed top-0 left-0 w-full bg-red-600 text-white text-center py-2 text-sm font-bold z-50 animate-pulse cursor-pointer" onclick="tryPlayAudio()">
     <i class="fa-solid fa-volume-high mr-2"></i> Touchez l'écran pour activer le son
   </div>
@@ -149,13 +65,11 @@
 
   <main class="flex-1 flex flex-col items-center justify-center p-4 relative z-10">
     
-    <!-- Sélecteur de mode (PTT / Continu) -->
     <div id="modeSelector" class="flex glass-card rounded-full p-1 mb-6 gap-1 text-xs sm:text-sm w-64">
       <button data-mode="ptt" class="mode-btn w-1/2 py-2.5 rounded-full font-bold uppercase tracking-wider active-mode">PTT</button>
       <button data-mode="full" class="mode-btn w-1/2 py-2.5 rounded-full font-bold uppercase tracking-wider">Continu</button>
     </div>
 
-    <!-- Visualiseur Audio -->
     <div class="w-full max-w-sm h-24 mb-8 glass-card rounded-2xl p-3 flex items-center justify-center overflow-hidden relative shadow-inner">
       <canvas id="audioVisualizer" class="w-full h-full opacity-80"></canvas>
       <div id="peerInfo" class="absolute top-2 left-3 text-[10px] text-slate-300 font-mono bg-slate-900/80 px-2 py-1 rounded-md border border-slate-700/50">
@@ -163,7 +77,6 @@
       </div>
     </div>
 
-    <!-- Bouton Principal PTT -->
     <div class="relative flex items-center justify-center mt-2">
       <div id="pulseBg" class="absolute w-72 h-72 rounded-full bg-orange-500/20 pulse-ring pointer-events-none hidden"></div>
       <button id="pttBtn" aria-label="Bouton principal" class="ptt-button w-60 h-60 rounded-full flex flex-col items-center justify-center border-4 border-orange-400/20 z-20 cursor-pointer">
@@ -173,7 +86,6 @@
       </button>
     </div>
 
-    <!-- Statut TX / RX -->
     <div id="txRxStatus" class="mt-10 px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase bg-slate-800/80 text-slate-400 border border-slate-700/50 backdrop-blur-md transition-all duration-300">Veille</div>
   </main>
 
@@ -181,7 +93,6 @@
     <p class="text-[11px] text-orange-400/80 font-mono tracking-wider">Made by Brahim Laiche 2026 Paris</p>
   </footer>
 
-  <!-- Modal Aide -->
   <div id="helpModal" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="modal-content glass-card max-w-md w-full rounded-3xl p-6 border border-slate-600/50 max-h-[90vh] overflow-y-auto shadow-2xl">
       <div class="flex justify-between items-center mb-5">
@@ -205,7 +116,6 @@
     </div>
   </div>
 
-  <!-- Modal Configuration -->
   <div id="configModal" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="modal-content glass-card max-w-md w-full rounded-3xl p-6 border border-slate-600/50 max-h-[90vh] overflow-y-auto shadow-2xl">
       <div class="flex justify-between items-center mb-5">
@@ -213,14 +123,12 @@
         <button id="closeConfigBtn" class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
       </div>
       
-      <!-- Section ID / QR -->
       <div class="mb-5 bg-slate-800/60 p-5 rounded-2xl text-center border border-slate-700/50">
         <span class="text-[11px] text-slate-400 uppercase tracking-wider font-bold block mb-2">Votre ID d'appareil</span>
         <div id="myIdDisplay" class="font-mono text-xl font-bold text-orange-400 tracking-wider mb-3">...</div>
         <div id="qrcode" class="flex justify-center p-2 bg-white rounded-xl inline-block my-1 shadow-lg"></div>
       </div>
 
-      <!-- Section Connexion -->
       <div class="space-y-4">
         <div>
           <label for="targetPeerId" class="text-[11px] text-slate-400 uppercase tracking-wider font-bold block mb-2">Se connecter à un interlocuteur</label>
@@ -247,7 +155,6 @@
           </button>
         </div>
 
-        <!-- Section Apparence (Image de fond) -->
         <div class="relative flex py-2 items-center">
           <div class="flex-grow border-t border-slate-700/50"></div>
           <span class="flex-shrink mx-4 text-[10px] text-slate-500 font-bold uppercase">Apparence</span>
@@ -268,17 +175,14 @@
     </div>
   </div>
 
-  <!-- Éléments Audio -->
-  <!-- remoteAudio : reçoit le flux de l'interlocuteur -->
   <audio id="remoteAudio" autoplay playsinline></audio>
-  <!-- silentAudio : force Chrome à transmettre le flux WebAudio (Hack) -->
   <audio id="silentAudio" autoplay playsinline muted></audio>
 
   <script>
     'use strict';
     const $ = (id) => document.getElementById(id);
 
-    // ===== État de l'application =====
+    // État
     let myPeerId = null;
     let peer = null;
     let activeCall = null;
@@ -296,193 +200,141 @@
     let scanInterval = null;
     let autoplayBlocked = false;
 
-    // ===== Utilitaires =====
+    // Utilitaires
     const generateShortId = () => `TALK-${Math.floor(100000 + Math.random() * 900000)}`;
-
     function ensureAudioCtx() {
       if (!audioCtx) {
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-        catch (e) { console.warn('AudioContext KO', e); return null; }
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
       }
       if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
       return audioCtx;
     }
-
     function updateTxRxStatus(text, color) {
       const el = $('txRxStatus');
       el.innerText = text;
       const base = "mt-10 px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase border backdrop-blur-md transition-all duration-300";
-      const map = {
-        orange: "bg-orange-500/20 text-orange-400 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]",
-        emerald:"bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]",
-        red:    "bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]",
-        gray:   "bg-slate-800/80 text-slate-400 border-slate-700/50"
-      };
+      const map = { orange: "bg-orange-500/20 text-orange-400 border-orange-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]", emerald: "bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]", red: "bg-red-500/20 text-red-400 border-red-500/50", gray: "bg-slate-800/80 text-slate-400 border-slate-700/50" };
       el.className = `${base} ${map[color] || map.gray}`;
     }
-
-    // Beeps radio
     function playRadioBeep(type) {
-      const ctx = ensureAudioCtx();
-      if (!ctx) return;
+      const ctx = ensureAudioCtx(); if (!ctx) return;
       try {
         if (type === 'squelch') {
-          const sz = Math.floor(ctx.sampleRate * 0.05);
-          const b = ctx.createBuffer(1, sz, ctx.sampleRate);
-          const o = b.getChannelData(0);
+          const sz = Math.floor(ctx.sampleRate * 0.05); const b = ctx.createBuffer(1, sz, ctx.sampleRate); const o = b.getChannelData(0);
           for (let i = 0; i < sz; i++) o[i] = Math.random() * 2 - 1;
-          const src = ctx.createBufferSource(); src.buffer = b;
-          const g = ctx.createGain();
-          g.gain.setValueAtTime(0.1, ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+          const src = ctx.createBufferSource(); src.buffer = b; const g = ctx.createGain();
+          g.gain.setValueAtTime(0.1, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
           src.connect(g).connect(ctx.destination); src.start();
         } else if (type === 'roger') {
           const osc = ctx.createOscillator(); const g = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(1200, ctx.currentTime);
-          osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.08);
-          g.gain.setValueAtTime(0.1, ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.16);
-          osc.connect(g).connect(ctx.destination);
-          osc.start(); osc.stop(ctx.currentTime + 0.16);
+          osc.type = 'sine'; osc.frequency.setValueAtTime(1200, ctx.currentTime); osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.08);
+          g.gain.setValueAtTime(0.1, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.16);
+          osc.connect(g).connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.16);
         }
       } catch (e) {}
     }
 
-    // ===== Pipeline Audio (Hack Chrome inclus) =====
+    // ===== Demande de micro déclenchée par l'utilisateur =====
+    async function requestMicAndStart() {
+      if (localStream) return true;
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+          video: false
+        });
+        setupAudioPipeline();
+        return true;
+      } catch (err) {
+        console.error("Erreur micro:", err);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = "fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4";
+        errorDiv.innerHTML = `
+          <div class="glass-card max-w-sm w-full rounded-3xl p-6 text-center border border-red-500/30">
+            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-microphone-slash text-2xl text-red-500"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Microphone requis</h3>
+            <p class="text-sm text-slate-300 mb-6">
+              L'application a besoin d'accéder au microphone pour fonctionner.<br><br>
+              Veuillez autoriser l'accès dans les paramètres de votre téléphone, puis réessayer.
+            </p>
+            <button onclick="location.reload()" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold py-3 rounded-xl shadow-lg">
+              Réessayer
+            </button>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        return false;
+      }
+    }
+
+    // Pipeline Audio
     function setupAudioPipeline() {
-      const ctx = ensureAudioCtx();
-      if (!ctx || !localStream) return;
+      const ctx = ensureAudioCtx(); if (!ctx || !localStream) return;
       try {
         const src = ctx.createMediaStreamSource(localStream);
-        
-        // Analyseur local
-        localAnalyser = ctx.createAnalyser();
-        localAnalyser.fftSize = 64;
-        src.connect(localAnalyser);
-
-        // Gain TX
-        txGain = ctx.createGain();
-        txGain.gain.value = 0;
-
-        txDestination = ctx.createMediaStreamDestination();
-        src.connect(txGain).connect(txDestination);
+        localAnalyser = ctx.createAnalyser(); localAnalyser.fftSize = 64; src.connect(localAnalyser);
+        txGain = ctx.createGain(); txGain.gain.value = 0;
+        txDestination = ctx.createMediaStreamDestination(); src.connect(txGain).connect(txDestination);
         gatedStream = txDestination.stream;
-
-        // HACK CHROME : Consommer le flux via une balise muette pour éviter la coupure WebRTC
-        const silentAudio = $('silentAudio');
-        silentAudio.srcObject = gatedStream;
+        const silentAudio = $('silentAudio'); silentAudio.srcObject = gatedStream;
         silentAudio.play().catch(e => console.log('Silent audio bloqué:', e));
-      } catch (e) {
-        console.warn('Pipeline audio fallback', e);
-        txGain = null;
-        gatedStream = null;
-      }
+      } catch (e) { txGain = null; gatedStream = null; }
       startVisualizerLoop();
     }
-
     function applyTxState() {
-      if (txGain && audioCtx) {
-        txGain.gain.value = isTransmitting ? 1 : 0;
-      } else if (localStream) {
-        const t = localStream.getAudioTracks()[0];
-        if (t) t.enabled = isTransmitting;
-      }
+      if (txGain && audioCtx) txGain.gain.value = isTransmitting ? 1 : 0;
+      else if (localStream) { const t = localStream.getAudioTracks()[0]; if (t) t.enabled = isTransmitting; }
     }
-
     function setTx(on, opts = {}) {
-      const was = isTransmitting;
-      isTransmitting = !!on;
-      applyTxState();
-
+      const was = isTransmitting; isTransmitting = !!on; applyTxState();
       if (!opts.silent && on !== was && radioMode !== 'full') {
         playRadioBeep(on ? 'squelch' : 'roger');
         if (navigator.vibrate) navigator.vibrate(on ? 40 : [20, 30]);
       }
-
       $('pttBtn').classList.toggle('active', isTransmitting);
       $('pulseBg').classList.toggle('hidden', !isTransmitting);
       updateStatusForMode();
     }
-
-    // ===== Visualiseur =====
     function attachRemoteVisualizer(stream) {
-      const ctx = ensureAudioCtx();
-      if (!ctx) return;
-      try {
-        const src = ctx.createMediaStreamSource(stream);
-        remoteAnalyser = ctx.createAnalyser();
-        remoteAnalyser.fftSize = 64;
-        src.connect(remoteAnalyser);
-      } catch (e) {}
+      const ctx = ensureAudioCtx(); if (!ctx) return;
+      try { const src = ctx.createMediaStreamSource(stream); remoteAnalyser = ctx.createAnalyser(); remoteAnalyser.fftSize = 64; src.connect(remoteAnalyser); } catch (e) {}
       startVisualizerLoop();
     }
-
     function startVisualizerLoop() {
-      if (visualizerStarted) return;
-      visualizerStarted = true;
-      const canvas = $('audioVisualizer');
-      const ctx = canvas.getContext('2d');
-      const buf = new Uint8Array(32);
-
+      if (visualizerStarted) return; visualizerStarted = true;
+      const canvas = $('audioVisualizer'); const ctx = canvas.getContext('2d'); const buf = new Uint8Array(32);
       function draw() {
         requestAnimationFrame(draw);
-        const dpr = window.devicePixelRatio || 1;
-        const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
-        const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
-        if (canvas.width !== w) canvas.width = w;
-        if (canvas.height !== h) canvas.height = h;
+        const dpr = window.devicePixelRatio || 1; const w = Math.max(1, Math.floor(canvas.clientWidth * dpr)); const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+        if (canvas.width !== w) canvas.width = w; if (canvas.height !== h) canvas.height = h;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         let an = (radioMode === 'full' || isTransmitting) ? localAnalyser : (remoteAnalyser || localAnalyser);
         if (!an) return;
-
-        an.getByteFrequencyData(buf);
-        const bw = canvas.width / buf.length;
+        an.getByteFrequencyData(buf); const bw = canvas.width / buf.length;
         for (let i = 0; i < buf.length; i++) {
-          const bh = (buf[i] / 255) * canvas.height;
-          if (bh < 1) continue;
-          ctx.fillStyle = isTransmitting ? '#f97316' : '#64748b';
-          ctx.fillRect(i * bw, canvas.height - bh, Math.max(1, bw - 1), bh);
+          const bh = (buf[i] / 255) * canvas.height; if (bh < 1) continue;
+          ctx.fillStyle = isTransmitting ? '#f97316' : '#64748b'; ctx.fillRect(i * bw, canvas.height - bh, Math.max(1, bw - 1), bh);
         }
       }
       draw();
     }
 
-    // ===== Gestion des Modes =====
+    // Gestion des modes
     function updateStatusForMode() {
-      if (radioMode === 'full') {
-        updateTxRxStatus(isTransmitting ? 'LIVE · DUPLEX' : 'MUTÉ', isTransmitting ? 'orange' : 'gray');
-      } else if (isTransmitting) {
-        updateTxRxStatus('ÉMISSION (TX)', 'orange');
-      } else {
-        updateTxRxStatus(activeCall ? 'RÉCEPTION (RX)' : 'Veille', activeCall ? 'emerald' : 'gray');
-      }
+      if (radioMode === 'full') updateTxRxStatus(isTransmitting ? 'LIVE · DUPLEX' : 'MUTÉ', isTransmitting ? 'orange' : 'gray');
+      else if (isTransmitting) updateTxRxStatus('ÉMISSION (TX)', 'orange');
+      else updateTxRxStatus(activeCall ? 'RÉCEPTION (RX)' : 'Veille', activeCall ? 'emerald' : 'gray');
     }
-
     function setMode(mode) {
       if (!['ptt','full'].includes(mode) || mode === radioMode) return;
-      radioMode = mode;
-      isTransmitting = false;
-      applyTxState();
-      updateModeUI();
-
-      if (mode === 'full') {
-        setTx(true, { silent: true }); // Micro ouvert en continu
-      } else {
-        updateStatusForMode();
-      }
+      radioMode = mode; isTransmitting = false; applyTxState(); updateModeUI();
+      if (mode === 'full') setTx(true, { silent: true });
+      else updateStatusForMode();
     }
-
     function updateModeUI() {
-      document.querySelectorAll('.mode-btn').forEach(b => {
-        b.classList.toggle('active-mode', b.dataset.mode === radioMode);
-      });
-
-      const icon = $('pttBtn').querySelector('i');
-      const label = $('pttLabel');
-      const sub = $('pttSub');
-
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active-mode', b.dataset.mode === radioMode));
+      const icon = $('pttBtn').querySelector('i'); const label = $('pttLabel'); const sub = $('pttSub');
       if (radioMode === 'ptt') {
         icon.className = 'fa-solid fa-microphone text-6xl text-white mb-3 drop-shadow-lg transition-transform duration-300';
         label.textContent = 'MAINTENIR'; sub.textContent = 'POUR PARLER';
@@ -492,57 +344,28 @@
       }
     }
 
-    // ===== Arrière-plan Personnalisé =====
-    const bgLayer = $('bgLayer');
-    
-    function loadBg() {
-      const savedBg = localStorage.getItem('talkie_bg');
-      if (savedBg) {
-        bgLayer.style.backgroundImage = `url(${savedBg})`;
-      }
-    }
-    
+    // Arrière-plan
+    function loadBg() { const savedBg = localStorage.getItem('talkie_bg'); if (savedBg) $('bgLayer').style.backgroundImage = `url(${savedBg})`; }
     $('bgImageInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dataUrl = ev.target.result;
-        bgLayer.style.backgroundImage = `url(${dataUrl})`;
-        try { localStorage.setItem('talkie_bg', dataUrl); } catch(e) { alert('Image trop lourde pour être sauvegardée.'); }
-      };
+      reader.onload = (ev) => { $('bgLayer').style.backgroundImage = `url(${ev.target.result})`; try { localStorage.setItem('talkie_bg', ev.target.result); } catch(e) {} };
       reader.readAsDataURL(file);
     });
+    $('resetBgBtn').addEventListener('click', () => { $('bgLayer').style.backgroundImage = 'none'; localStorage.removeItem('talkie_bg'); });
 
-    $('resetBgBtn').addEventListener('click', () => {
-      bgLayer.style.backgroundImage = 'none';
-      localStorage.removeItem('talkie_bg');
-    });
-
-    // ===== QR Code =====
-    function renderQR() {
-      const c = $('qrcode'); c.innerHTML = '';
-      try { new QRCode(c, { text: myPeerId, width: 128, height: 128, colorDark: '#0f172a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }); } catch (e) {}
-    }
+    // QR Code & PeerJS
+    function renderQR() { const c = $('qrcode'); c.innerHTML = ''; try { new QRCode(c, { text: myPeerId, width: 128, height: 128, colorDark: '#0f172a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }); } catch (e) {} }
     function updateMyIdUI() { $('myIdDisplay').innerText = myPeerId; renderQR(); }
-
-    // ===== PeerJS =====
     function createPeer() {
       if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
       peer = new Peer(myPeerId, { debug: 1 });
-
-      peer.on('open', () => {
-        $('statusDot').className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 status-online transition-colors duration-500';
-        $('statusText').innerText = 'Prêt · Canal Libre';
+      peer.on('open', () => { $('statusDot').className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 status-online transition-colors duration-500'; $('statusText').innerText = 'Prêt · Canal Libre'; });
+      peer.on('call', async (call) => {
+        const hasMic = await requestMicAndStart(); if (!hasMic) { try { call.close(); } catch (_) {} return; }
+        const stream = gatedStream || localStream; if (!stream) { try { call.close(); } catch (_) {} return; }
+        call.answer(stream); setupCallHandlers(call);
       });
-
-      peer.on('call', (call) => {
-        const stream = gatedStream || localStream;
-        if (!stream) { try { call.close(); } catch (_) {} return; }
-        call.answer(stream);
-        setupCallHandlers(call);
-      });
-
       peer.on('disconnected', () => { try { peer.reconnect(); } catch (_) {} });
       peer.on('error', (err) => {
         console.error('PeerJS:', err);
@@ -551,52 +374,33 @@
       });
     }
 
-    // ===== Gestion Audio Distant & Autoplay =====
     function tryPlayAudio() {
-      const audioEl = $('remoteAudio');
-      if (!audioEl.srcObject) return;
+      const audioEl = $('remoteAudio'); if (!audioEl.srcObject) return;
       const playPromise = audioEl.play();
       if (playPromise !== undefined) {
-        playPromise.then(() => {
-          $('autoplayAlert').classList.add('hidden');
-          autoplayBlocked = false;
-        }).catch(() => {
-          $('autoplayAlert').classList.remove('hidden');
-          autoplayBlocked = true;
-        });
+        playPromise.then(() => { $('autoplayAlert').classList.add('hidden'); autoplayBlocked = false; })
+        .catch(() => { $('autoplayAlert').classList.remove('hidden'); autoplayBlocked = true; });
       }
     }
-
     document.addEventListener('click', () => { if (autoplayBlocked) tryPlayAudio(); });
     document.addEventListener('touchstart', () => { if (autoplayBlocked) tryPlayAudio(); });
 
     function setupCallHandlers(call) {
-      activeCall = call;
-      $('currentPeerDisplay').innerText = call.peer;
-      $('statusText').innerText = 'Appareil Lié';
-
-      call.on('stream', (remoteStream) => {
-        $('remoteAudio').srcObject = remoteStream;
-        tryPlayAudio();
-        attachRemoteVisualizer(remoteStream);
-        if (!isTransmitting) updateStatusForMode();
-      });
-
+      activeCall = call; $('currentPeerDisplay').innerText = call.peer; $('statusText').innerText = 'Appareil Lié';
+      call.on('stream', (remoteStream) => { $('remoteAudio').srcObject = remoteStream; tryPlayAudio(); attachRemoteVisualizer(remoteStream); if (!isTransmitting) updateStatusForMode(); });
       call.on('error', () => updateTxRxStatus('Erreur Appel', 'red'));
-      call.on('close', () => {
-        $('currentPeerDisplay').innerText = 'Non connecté';
-        $('statusText').innerText = 'Déconnecté';
-        activeCall = null; remoteAnalyser = null;
-        updateStatusForMode();
-      });
+      call.on('close', () => { $('currentPeerDisplay').innerText = 'Non connecté'; $('statusText').innerText = 'Déconnecté'; activeCall = null; remoteAnalyser = null; updateStatusForMode(); });
     }
 
-    function connectToPeer(targetId) {
+    // Connexion nécessitant le micro
+    async function connectToPeer(targetId) {
       targetId = (targetId || '').trim();
       if (!targetId || targetId === myPeerId || !peer || !peer.open) return;
-      const stream = gatedStream || localStream;
-      if (!stream) return;
+      
+      const hasMic = await requestMicAndStart();
+      if (!hasMic) return;
 
+      const stream = gatedStream || localStream; if (!stream) return;
       try {
         const call = peer.call(targetId, stream);
         if (call) setupCallHandlers(call);
@@ -604,66 +408,63 @@
       } catch (e) {}
     }
 
-    // ===== Événements UI =====
+    // UI
+    $('helpBtn').addEventListener('click', () => $('helpModal').classList.add('active'));
+    $('closeHelpBtn').addEventListener('click', () => $('helpModal').classList.remove('active'));
+    $('gotItBtn').addEventListener('click', () => $('helpModal').classList.remove('active'));
+    $('configBtn').addEventListener('click', () => $('configModal').classList.add('active'));
+    $('closeConfigBtn').addEventListener('click', () => { $('configModal').classList.remove('active'); stopScanner(); });
+    $('connectPeerBtn').addEventListener('click', () => connectToPeer($('targetPeerId').value));
+    $('targetPeerId').addEventListener('keydown', (e) => { if (e.key === 'Enter') connectToPeer($('targetPeerId').value); });
+
+    // Gestionnaire PTT (Demande le micro au clique)
     const pttBtn = $('pttBtn');
-    pttBtn.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      ensureAudioCtx();
+    pttBtn.addEventListener('pointerdown', async (e) => {
+      e.preventDefault(); ensureAudioCtx();
+      
+      const hasMic = await requestMicAndStart();
+      if (!hasMic) return;
+
       if (radioMode === 'ptt') {
         try { pttBtn.setPointerCapture(e.pointerId); } catch (_) {}
         setTx(true);
       } else if (radioMode === 'full') {
-        setTx(!isTransmitting); // Toggle Mute
+        setTx(!isTransmitting);
       }
     });
     pttBtn.addEventListener('pointerup', (e) => {
-      e.preventDefault();
-      try { pttBtn.releasePointerCapture(e.pointerId); } catch (_) {}
+      e.preventDefault(); try { pttBtn.releasePointerCapture(e.pointerId); } catch (_) {}
       if (radioMode === 'ptt') setTx(false);
     });
     pttBtn.addEventListener('pointercancel', () => { if (radioMode === 'ptt') setTx(false); });
 
-    function openModal(id) { $(id).classList.add('active'); }
-    function closeModal(id) { $(id).classList.remove('active'); }
-
-    $('helpBtn').addEventListener('click', () => openModal('helpModal'));
-    $('closeHelpBtn').addEventListener('click', () => closeModal('helpModal'));
-    $('gotItBtn').addEventListener('click', () => closeModal('helpModal'));
-    
-    $('configBtn').addEventListener('click', () => openModal('configModal'));
-    $('closeConfigBtn').addEventListener('click', () => { closeModal('configModal'); stopScanner(); });
-    $('connectPeerBtn').addEventListener('click', () => connectToPeer($('targetPeerId').value));
-    $('targetPeerId').addEventListener('keydown', (e) => { if (e.key === 'Enter') connectToPeer($('targetPeerId').value); });
-
+    // Mode selector (Demande le micro si on passe en mode Full)
     document.querySelectorAll('.mode-btn').forEach(btn => {
-      btn.addEventListener('click', () => setMode(btn.dataset.mode));
+      btn.addEventListener('click', async () => {
+        if (btn.dataset.mode === 'full') {
+          const hasMic = await requestMicAndStart();
+          if (!hasMic) return;
+        }
+        setMode(btn.dataset.mode);
+      });
     });
 
-    // ===== Scanner QR =====
+    // Scanner
     $('startScanBtn').addEventListener('click', async () => {
       try {
         videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         const v = $('scannerVideo'); v.srcObject = videoStream; await v.play();
         $('scannerContainer').classList.remove('hidden');
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
+        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true });
         scanInterval = setInterval(() => {
           if (v.readyState < 2) return;
-          canvas.width = v.videoWidth; canvas.height = v.videoHeight;
-          if (!canvas.width || !canvas.height) return;
-          ctx.drawImage(v, 0, 0);
-          const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          canvas.width = v.videoWidth; canvas.height = v.videoHeight; if (!canvas.width || !canvas.height) return;
+          ctx.drawImage(v, 0, 0); const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const code = jsQR(img.data, img.width, img.height);
-          if (code && code.data) {
-            $('targetPeerId').value = code.data;
-            stopScanner(); connectToPeer(code.data);
-          }
+          if (code && code.data) { $('targetPeerId').value = code.data; stopScanner(); connectToPeer(code.data); }
         }, 300);
       } catch (err) { alert('Accès caméra impossible.'); }
     });
-
     function stopScanner() {
       if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
       if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
@@ -671,51 +472,12 @@
     }
     $('stopScanBtn').addEventListener('click', stopScanner);
 
-    // ===== Initialisation Globale (avec gestion d'erreur Micro) =====
+    // Init
     async function initApp() {
-      loadBg(); // Charge l'image de fond si elle existe
-      
-      myPeerId = generateShortId();
-      updateMyIdUI();
-      updateModeUI();
-
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          // Demande l'accès micro (déclenche l'autorisation Android/iOS)
-          localStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-            video: false
-          });
-          setupAudioPipeline();
-        } catch (err) { 
-          console.error("Erreur micro:", err);
-          
-          // Affichage d'une popup d'erreur propre si le micro est refusé
-          const errorDiv = document.createElement('div');
-          errorDiv.className = "fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[100] p-4";
-          errorDiv.innerHTML = `
-            <div class="glass-card max-w-sm w-full rounded-3xl p-6 text-center border border-red-500/30">
-              <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-microphone-slash text-2xl text-red-500"></i>
-              </div>
-              <h3 class="text-lg font-bold text-white mb-2">Microphone requis</h3>
-              <p class="text-sm text-slate-300 mb-6">
-                L'application a besoin d'accéder au microphone pour fonctionner.<br><br>
-                Veuillez autoriser l'accès dans les paramètres de votre téléphone, puis réessayer.
-              </p>
-              <button onclick="location.reload()" class="w-full bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold py-3 rounded-xl shadow-lg">
-                Réessayer
-              </button>
-            </div>
-          `;
-          document.body.appendChild(errorDiv);
-          return; // On arrête l'initialisation
-        }
-      }
-      createPeer();
+      loadBg(); 
+      myPeerId = generateShortId(); updateMyIdUI(); updateModeUI();
+      createPeer(); // On crée le Peer sans demander le micro
     }
-
-    // Lancement au chargement
     window.addEventListener('load', initApp);
   </script>
 </body>
